@@ -11,7 +11,7 @@ import torch_optimizer as optim
 from torch.optim.lr_scheduler import MultiStepLR, ReduceLROnPlateau
 from metrics import *
 
-device = torch.device("cuda:1") if torch.cuda.is_available() else torch.cuda("cpu")
+device = torch.device("cuda:0") if torch.cuda.is_available() else torch.cuda("cpu")
 
 import torch.nn as nn
 import networkx as nx
@@ -34,7 +34,7 @@ n_iterations = math.ceil(total_samples/5)
 
  
 #utilities
-def train(model, device, trainloader, optimizer, epoch):
+def train(model, device, trainloader, optimizer, epoch, num_epochs):
 
   print(f'Training on {len(trainloader)} samples.....')
   model.train()
@@ -55,8 +55,9 @@ def train(model, device, trainloader, optimizer, epoch):
   scheduler.step()
   labels_tr = labels_tr.detach().numpy()
   predictions_tr = predictions_tr.detach().numpy()
-  acc_tr = get_accuracy(labels_tr, predictions_tr , 0.5)
-  print(f'Epoch {epoch-1} / 30 [==============================] - train_loss : {loss} - train_accuracy : {acc_tr}')
+  # acc_tr = get_accuracy(labels_tr, predictions_tr , 0.5)
+  mse_tr = get_mse(labels_tr, predictions_tr)
+  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - train_loss : {loss} - train_mse : {mse_tr}')
     
  
 
@@ -88,21 +89,23 @@ early_stop = False
 
 model = GCNN()
 model.to(device)
-num_epochs = 50
+num_epochs = 5
 loss_func = nn.MSELoss()
 min_loss = 100
-best_accuracy = 0
+# best_accuracy = 0
+best_mse = 100
 optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
 for epoch in range(num_epochs):
-  train(model, device, trainloader, optimizer, epoch+1)
+  train(model, device, trainloader, optimizer, epoch+1, num_epochs)
   G, P = predict(model, device, testloader)
   #print( f'Predictions---------------------------------------------{P}')
   #print(f'Labels----------------------------------------------------{G}')
   loss = get_mse(G,P)
-  accuracy = get_accuracy(G,P, 0.5)
-  print(f'Epoch {epoch}/ {num_epochs} [==============================] - val_loss : {loss} - val_accuracy : {accuracy}')
-  if(accuracy > best_accuracy):
-    best_accuracy = accuracy
+  # accuracy = get_accuracy(G,P, 0.5)
+  mse_score = get_mse(G, P)
+  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - val_loss : {loss} - val_mse : {mse_score}')
+  if(mse_score < best_mse):
+    best_mse = mse_score
     best_acc_epoch = epoch
     torch.save(model.state_dict(), "../human_features/GCN.pth") #path to save the model
     print("Model")
@@ -117,6 +120,6 @@ for epoch in range(num_epochs):
     early_stop = True
     break
 
-print(f'min_val_loss : {min_loss} for epoch {min_loss_epoch} ............... best_val_accuracy : {best_accuracy} for epoch {best_acc_epoch}')
+print(f'min_val_loss : {min_loss} for epoch {min_loss_epoch} ............... best_val_mse : {best_mse} for epoch {best_acc_epoch}')
 print("Model saved")
 

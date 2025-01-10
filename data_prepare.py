@@ -17,6 +17,11 @@ npy_ar = np.load(npy_file)
 print(npy_ar.shape)
 from torch.utils.data import Dataset as Dataset_n
 from torch_geometric.data import DataLoader as DataLoader_n
+from torch_geometric.data import Data
+
+def bump(g):
+    return g
+    # return Data.from_dict(g.__dict__)
 
 class LabelledDataset(Dataset_n):
     def __init__(self, npy_file, processed_dir):
@@ -33,10 +38,16 @@ class LabelledDataset(Dataset_n):
     def __getitem__(self, index):
       prot_1 = os.path.join(self.processed_dir, self.protein_1[index]+".pt")
       prot_2 = os.path.join(self.processed_dir, self.protein_2[index]+".pt")
+      # print(prot_1, prot_2)
+      # print(glob.glob(prot_1), glob.glob(prot_2))
       #print(f'Second prot is {prot_2}')
       prot_1 = torch.load(glob.glob(prot_1)[0])
       #print(f'Here lies {glob.glob(prot_2)}')
       prot_2 = torch.load(glob.glob(prot_2)[0])
+      prot_1 = bump(prot_1)
+      prot_2 = bump(prot_2)
+      prot_1.x = prot_1.x.to(torch.float32)
+      prot_2.x = prot_2.x.to(torch.float32)
       return prot_1, prot_2, torch.tensor(self.label[index])
 
 
