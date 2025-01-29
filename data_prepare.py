@@ -1,71 +1,138 @@
-
-# note that this custom dataset is not prepared on the top of geometric Dataset(pytorch's inbuilt)
 import os
 import torch
 import glob
-import numpy as np 
+import numpy as np
 import random
 import math
 from os import listdir
 from os.path import isfile, join
-
-
-
-processed_dir="../human_features/processed/"
-npy_file = "../human_features/npy_file_new(human_dataset).npy"
-npy_ar = np.load(npy_file)
-print(npy_ar.shape)
 from torch.utils.data import Dataset as Dataset_n
-from torch_geometric.data import DataLoader as DataLoader_n
-from torch_geometric.data import Data
+from torch.utils.data import DataLoader  # <-- from standard PyTorch
+from torch_geometric.data import Data, Batch
 
 def bump(g):
     return g
-    # return Data.from_dict(g.__dict__)
 
 class LabelledDataset(Dataset_n):
     def __init__(self, npy_file, processed_dir):
-      self.npy_ar = np.load(npy_file)
-      self.processed_dir = processed_dir
-      self.protein_1 = self.npy_ar[:,2]
-      self.protein_2 = self.npy_ar[:,5]
-      self.label = self.npy_ar[:,6].astype(float)
-      self.n_samples = self.npy_ar.shape[0]
+        self.npy_ar = np.load(npy_file)
+        self.processed_dir = processed_dir
+        self.protein_1 = self.npy_ar[:,2]
+        self.protein_2 = self.npy_ar[:,5]
+        self.label = self.npy_ar[:,6].astype(float)
+        self.n_samples = self.npy_ar.shape[0]
 
     def __len__(self):
-      return(self.n_samples)
+        return self.n_samples
 
     def __getitem__(self, index):
-      prot_1 = os.path.join(self.processed_dir, self.protein_1[index]+".pt")
-      prot_2 = os.path.join(self.processed_dir, self.protein_2[index]+".pt")
-      # print(prot_1, prot_2)
-      # print(glob.glob(prot_1), glob.glob(prot_2))
-      #print(f'Second prot is {prot_2}')
-      prot_1 = torch.load(glob.glob(prot_1)[0])
-      #print(f'Here lies {glob.glob(prot_2)}')
-      prot_2 = torch.load(glob.glob(prot_2)[0])
-      prot_1 = bump(prot_1)
-      prot_2 = bump(prot_2)
-      prot_1.x = prot_1.x.to(torch.float32)
-      prot_2.x = prot_2.x.to(torch.float32)
-      return prot_1, prot_2, torch.tensor(self.label[index])
+        prot_1 = os.path.join(self.processed_dir, self.protein_1[index]+".pt")
+        prot_2 = os.path.join(self.processed_dir, self.protein_2[index]+".pt")
+        all_prots = os.listdir(os.path.join(self.processed_dir, 'masif_descriptors'))
+        real_name = None
+        for name in all_prots:
+            if name.startswith(self.protein_1[index].split('_')[0]):
+                real_name = name
+                break
+        prot_1_masif_straight = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p2_desc_straight.npy')
+        prot_1_masif_flipped = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p1_desc_flipped.npy')
+        real_name = None
+        for name in all_prots:
+            if name.startswith(self.protein_2[index].split('_')[0]):
+                real_name = name
+                break
+        prot_2_masif_straight = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p2_desc_straight.npy')
+        prot_2_masif_flipped = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p1_desc_flipped.npy')
+        prot_1 = torch.load(glob.glob(prot_1)[0])
+        prot_2 = torch.load(glob.glob(prot_2)[0])
+        prot_1 = bump(prot_1)
+        prot_2 = bump(prot_2)
+        prot_1.x = prot_1.x.to(torch.float32)
+        prot_2.x = prot_2.x.to(torch.float32)
+        prot_1_masif_straight = torch.tensor(np.load(prot_1_masif_straight))
+        prot_1_masif_flipped = torch.tensor(np.load(prot_1_masif_flipped))
+        prot_2_masif_straight = torch.tensor(np.load(prot_2_masif_straight))
+        prot_2_masif_flipped = torch.tensor(np.load(prot_2_masif_flipped))
+        return (
+            prot_1,
+            prot_2,
+            torch.tensor(self.label[index], dtype=torch.float32),
+            prot_1_masif_straight,
+            prot_1_masif_flipped,
+            prot_2_masif_straight,
+            prot_2_masif_flipped
+        )
 
+def collate_fn(batch):
+    prot_1s = [item[0] for item in batch]
+    prot_2s = [item[1] for item in batch]
+    labels = torch.stack([item[2] for item in batch])
+    p1_straight = [item[3] for item in batch]
+    p1_flipped = [item[4] for item in batch]
+    p2_straight = [item[5] for item in batch]
+    p2_flipped = [item[6] for item in batch]
 
+    max_len_p1_straight = max(x.size(0) for x in p1_straight)
+    max_len_p1_flipped = max(x.size(0) for x in p1_flipped)
+    max_len_p2_straight = max(x.size(0) for x in p2_straight)
+    max_len_p2_flipped = max(x.size(0) for x in p2_flipped)
 
-dataset = LabelledDataset(npy_file = npy_file ,processed_dir= processed_dir)
+    p1_straight_padded = []
+    for x in p1_straight:
+        tmp = torch.zeros((max_len_p1_straight, x.size(1)))
+        tmp[:x.size(0)] = x
+        p1_straight_padded.append(tmp)
 
-final_pairs =  np.load(npy_file)
+    p1_flipped_padded = []
+    for x in p1_flipped:
+        tmp = torch.zeros((max_len_p1_flipped, x.size(1)))
+        tmp[:x.size(0)] = x
+        p1_flipped_padded.append(tmp)
+
+    p2_straight_padded = []
+    for x in p2_straight:
+        tmp = torch.zeros((max_len_p2_straight, x.size(1)))
+        tmp[:x.size(0)] = x
+        p2_straight_padded.append(tmp)
+
+    p2_flipped_padded = []
+    for x in p2_flipped:
+        tmp = torch.zeros((max_len_p2_flipped, x.size(1)))
+        tmp[:x.size(0)] = x
+        p2_flipped_padded.append(tmp)
+
+    p1_straight_padded = torch.stack(p1_straight_padded, dim=0)
+    p1_flipped_padded = torch.stack(p1_flipped_padded, dim=0)
+    p2_straight_padded = torch.stack(p2_straight_padded, dim=0)
+    p2_flipped_padded = torch.stack(p2_flipped_padded, dim=0)
+
+    batch_1 = Batch.from_data_list(prot_1s)
+    batch_2 = Batch.from_data_list(prot_2s)
+    return batch_1, batch_2, labels, p1_straight_padded, p1_flipped_padded, p2_straight_padded, p2_flipped_padded
+
+base_dir = '../masif_features'
+processed_dir = os.path.join(base_dir, 'processed/')
+npy_file = os.path.join(base_dir, 'npy_file_new(human_dataset).npy')
+npy_ar = np.load(npy_file)
+dataset = LabelledDataset(npy_file=npy_file, processed_dir=processed_dir)
+final_pairs = np.load(npy_file)
 size = final_pairs.shape[0]
-print("Size is : ")
-print(size)
 seed = 42
 torch.manual_seed(seed)
-#print(math.floor(0.8 * size))
-#Make iterables using dataloader class  
-trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size) ])
-#print(trainset[0])
-trainloader = DataLoader_n(dataset= trainset, batch_size= 4, num_workers = 0)
-testloader = DataLoader_n(dataset= testset, batch_size= 4, num_workers = 0)
-print("Length")
-print(len(trainloader))
-print(len(testloader))
+trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
+
+trainloader = DataLoader(
+    trainset,
+    batch_size=4,
+    num_workers=0,
+    shuffle=True,
+    collate_fn=collate_fn  # crucial
+)
+
+testloader = DataLoader(
+    testset,
+    batch_size=4,
+    num_workers=0,
+    shuffle=False,
+    collate_fn=collate_fn  # crucial
+)

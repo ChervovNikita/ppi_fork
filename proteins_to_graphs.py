@@ -300,4 +300,5 @@ class ProteinDataset(Dataset):
         return torch.tensor(np.hstack((one_hot_symb, res_ftrs_out)), dtype=torch.float)
 
 
-prot_graphs = ProteinDataset("../human_features/")
+# prot_graphs = ProteinDataset("../human_features/")
+prot_graphs = ProteinDataset("../masif_features/")

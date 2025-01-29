@@ -42,11 +42,15 @@ def train(model, device, trainloader, optimizer, epoch, num_epochs):
   predictions_tr = torch.Tensor()
   scheduler = MultiStepLR(optimizer, milestones=[1,5], gamma=0.5)
   labels_tr = torch.Tensor()
-  for count,(prot_1, prot_2, label) in enumerate(trainloader):
+  for count,(prot_1, prot_2, label, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped) in enumerate(trainloader):
     prot_1 = prot_1.to(device)
     prot_2 = prot_2.to(device)
+    mas1_straight = mas1_straight.to(device)
+    mas1_flipped = mas1_flipped.to(device)
+    mas2_straight = mas2_straight.to(device)
+    mas2_flipped = mas2_flipped.to(device)
     optimizer.zero_grad()
-    output = model(prot_1, prot_2)
+    output = model(prot_1, prot_2, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped)
     predictions_tr = torch.cat((predictions_tr, output.cpu()), 0)
     labels_tr = torch.cat((labels_tr, label.view(-1,1).cpu()), 0)
     loss = loss_func(output, label.view(-1,1).float().to(device))
@@ -66,11 +70,15 @@ def predict(model, device, loader):
   predictions = torch.Tensor()
   labels = torch.Tensor()
   with torch.no_grad():
-    for prot_1, prot_2, label in loader:
+    for prot_1, prot_2, label, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped in loader:
       prot_1 = prot_1.to(device)
       prot_2 = prot_2.to(device)
+      mas1_straight = mas1_straight.to(device)
+      mas1_flipped = mas1_flipped.to(device)
+      mas2_straight = mas2_straight.to(device)
+      mas2_flipped = mas2_flipped.to(device)
       #print(torch.Tensor.size(prot_1.x), torch.Tensor.size(prot_2.x))
-      output = model(prot_1, prot_2)
+      output = model(prot_1, prot_2, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped)
       predictions = torch.cat((predictions, output.cpu()), 0)
       labels = torch.cat((labels, label.view(-1,1).cpu()), 0)
   labels = labels.numpy()
@@ -107,7 +115,7 @@ for epoch in range(num_epochs):
   if(mse_score < best_mse):
     best_mse = mse_score
     best_acc_epoch = epoch
-    torch.save(model.state_dict(), "../human_features/GCN.pth") #path to save the model
+    torch.save(model.state_dict(), "../masif_features/GCN.pth") #path to save the model
     print("Model")
   if(loss< min_loss):
     epochs_no_improve = 0
