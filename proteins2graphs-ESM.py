@@ -128,7 +128,7 @@ class ProteinDataset(Dataset):
     def __init__(self, root, transform=None, pre_transform=None):
         super(ProteinDataset, self).__init__(root, transform=None, pre_transform=None)
         self.data = self.processed_paths
-        # self.processed_dir = "../human_features/processed/"
+        # self.processed_dir = "../human_features/processed_2/"
         # self.data = torch.load(self.processed_paths)
         # print("Daata si {}". format(self.data))
 
@@ -153,6 +153,13 @@ class ProteinDataset(Dataset):
 
         data_list = []
         count = 0
+
+        my_cnt = 0
+        for file in tqdm(self.raw_paths):
+            if pathlib.Path(file).suffix == ".pdb":
+                my_cnt += 1
+        print('my_cnt:', my_cnt)
+        
         for file in tqdm(self.raw_paths):
             if pathlib.Path(file).suffix == ".pdb":
 

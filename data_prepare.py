@@ -46,8 +46,9 @@ class LabelledDataset(Dataset_n):
       prot_2 = torch.load(glob.glob(prot_2)[0])
       prot_1 = bump(prot_1)
       prot_2 = bump(prot_2)
-      prot_1.x = prot_1.x.to(torch.float32)
-      prot_2.x = prot_2.x.to(torch.float32)
+      prot_1.x = prot_1.x.to(torch.float32).cpu()
+      prot_2.x = prot_2.x.to(torch.float32).cpu()
+      # print(prot_1.x, prot_2.x, torch.tensor(self.label[index]))
       return prot_1, prot_2, torch.tensor(self.label[index])
 
 

@@ -87,9 +87,9 @@ epochs_no_improve = 0
 early_stop = False
 
 
-model = GCNN()
+model = GCNN(num_features_pro=1280)
 model.to(device)
-num_epochs = 5
+num_epochs = 50
 loss_func = nn.MSELoss()
 min_loss = 100
 # best_accuracy = 0
