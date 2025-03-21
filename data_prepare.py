@@ -34,15 +34,15 @@ class LabelledDataset(Dataset_n):
             if name.startswith(self.protein_1[index].split('_')[0]):
                 real_name = name
                 break
-        prot_1_masif_straight = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p2_desc_straight.npy')
-        prot_1_masif_flipped = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p1_desc_flipped.npy')
+        prot_1_masif_straight = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'desc_straight.npy')
+        prot_1_masif_flipped = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'desc_flipped.npy')
         real_name = None
         for name in all_prots:
             if name.startswith(self.protein_2[index].split('_')[0]):
                 real_name = name
                 break
-        prot_2_masif_straight = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p2_desc_straight.npy')
-        prot_2_masif_flipped = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'p1_desc_flipped.npy')
+        prot_2_masif_straight = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'desc_straight.npy')
+        prot_2_masif_flipped = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'desc_flipped.npy')
         prot_1 = torch.load(glob.glob(prot_1)[0])
         prot_2 = torch.load(glob.glob(prot_2)[0])
         prot_1 = bump(prot_1)
