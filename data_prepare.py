@@ -43,7 +43,9 @@ class LabelledDataset(Dataset_n):
                 break
         prot_2_masif_straight = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'desc_straight.npy')
         prot_2_masif_flipped = os.path.join(self.processed_dir, 'masif_descriptors', real_name, 'desc_flipped.npy')
+        # print(prot_1)
         prot_1 = torch.load(glob.glob(prot_1)[0])
+        # print(prot_2)
         prot_2 = torch.load(glob.glob(prot_2)[0])
         prot_1 = bump(prot_1)
         prot_2 = bump(prot_2)
@@ -120,10 +122,14 @@ size = final_pairs.shape[0]
 seed = 42
 torch.manual_seed(seed)
 trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
+# trainset = dataset
+
+# npy_test_file = os.path.join(base_dir, 'npy_file_new(human_dataset)_test.npy')
+# testset = LabelledDataset(npy_file=npy_test_file, processed_dir=processed_dir)
 
 trainloader = DataLoader(
     trainset,
-    batch_size=4,
+    batch_size=1,
     num_workers=0,
     shuffle=True,
     collate_fn=collate_fn  # crucial

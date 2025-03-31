@@ -38,11 +38,12 @@ def train(model, device, trainloader, optimizer, epoch, num_epochs):
 
   print(f'Training on {len(trainloader)} samples.....')
   model.train()
-  loss_func = nn.MSELoss()
+  loss_func = nn.BCEWithLogitsLoss()
   predictions_tr = torch.Tensor()
   scheduler = MultiStepLR(optimizer, milestones=[1,5], gamma=0.5)
   labels_tr = torch.Tensor()
-  for count,(prot_1, prot_2, label, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped) in enumerate(trainloader):
+  loop = tqdm(trainloader, total=len(trainloader), desc=f'Epoch {epoch}/{num_epochs}')
+  for count,(prot_1, prot_2, label, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped) in enumerate(loop):
     prot_1 = prot_1.to(device)
     prot_2 = prot_2.to(device)
     mas1_straight = mas1_straight.to(device)
@@ -58,10 +59,9 @@ def train(model, device, trainloader, optimizer, epoch, num_epochs):
     optimizer.step()
   scheduler.step()
   labels_tr = labels_tr.detach().numpy()
-  predictions_tr = predictions_tr.detach().numpy()
-  # acc_tr = get_accuracy(labels_tr, predictions_tr , 0.5)
-  mse_tr = get_mse(labels_tr, predictions_tr)
-  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - train_loss : {loss} - train_mse : {mse_tr}')
+  predictions_tr = torch.sigmoid(torch.tensor(predictions_tr)).numpy()
+  acc_tr = get_accuracy(labels_tr, predictions_tr, 0.5)
+  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - train_loss : {loss} - train_accuracy : {acc_tr}')
     
  
 
@@ -77,15 +77,13 @@ def predict(model, device, loader):
       mas1_flipped = mas1_flipped.to(device)
       mas2_straight = mas2_straight.to(device)
       mas2_flipped = mas2_flipped.to(device)
-      #print(torch.Tensor.size(prot_1.x), torch.Tensor.size(prot_2.x))
       output = model(prot_1, prot_2, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped)
       predictions = torch.cat((predictions, output.cpu()), 0)
       labels = torch.cat((labels, label.view(-1,1).cpu()), 0)
   labels = labels.numpy()
-  predictions = predictions.numpy()
+  predictions = torch.sigmoid(torch.tensor(predictions)).numpy()
   return labels.flatten(), predictions.flatten()
-  
-  
+
 
 # training 
 
@@ -97,23 +95,19 @@ early_stop = False
 
 model = GCNN()
 model.to(device)
-num_epochs = 5
-loss_func = nn.MSELoss()
+num_epochs = 50
+loss_func = nn.BCEWithLogitsLoss()
 min_loss = 100
-# best_accuracy = 0
-best_mse = 100
+best_accuracy = 0
 optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
 for epoch in range(num_epochs):
   train(model, device, trainloader, optimizer, epoch+1, num_epochs)
   G, P = predict(model, device, testloader)
-  #print( f'Predictions---------------------------------------------{P}')
-  #print(f'Labels----------------------------------------------------{G}')
   loss = get_mse(G,P)
-  # accuracy = get_accuracy(G,P, 0.5)
-  mse_score = get_mse(G, P)
-  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - val_loss : {loss} - val_mse : {mse_score}')
-  if(mse_score < best_mse):
-    best_mse = mse_score
+  accuracy = get_accuracy(G,P, 0.5)
+  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - val_loss : {loss} - val_accuracy : {accuracy}')
+  if(accuracy > best_accuracy):
+    best_accuracy = accuracy
     best_acc_epoch = epoch
     torch.save(model.state_dict(), "../masif_features/GCN.pth") #path to save the model
     print("Model")
@@ -128,6 +122,6 @@ for epoch in range(num_epochs):
     early_stop = True
     break
 
-print(f'min_val_loss : {min_loss} for epoch {min_loss_epoch} ............... best_val_mse : {best_mse} for epoch {best_acc_epoch}')
+print(f'min_val_loss : {min_loss} for epoch {min_loss_epoch} ............... best_val_accuracy : {best_accuracy} for epoch {best_acc_epoch}')
 print("Model saved")
 
