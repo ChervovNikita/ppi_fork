@@ -144,9 +144,8 @@ class GCNN(nn.Module):
         # Concatenate all features
         combined = torch.cat([x, xt, mas1_out, mas2_out], dim=1)
         
-        # Final prediction
+        # Final prediction (logits)
         out = self.final_fc(combined)
-        out = self.sigmoid(out)
         return out
 
 
