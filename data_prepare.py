@@ -121,11 +121,11 @@ final_pairs = np.load(npy_file)
 size = final_pairs.shape[0]
 seed = 42
 torch.manual_seed(seed)
-trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
-# trainset = dataset
+# trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
+trainset = dataset
 
-# npy_test_file = os.path.join(base_dir, 'npy_file_new(human_dataset)_test.npy')
-# testset = LabelledDataset(npy_file=npy_test_file, processed_dir=processed_dir)
+npy_test_file = os.path.join(base_dir, 'npy_file_new_val(human_dataset).npy')
+testset = LabelledDataset(npy_file=npy_test_file, processed_dir=processed_dir)
 
 trainloader = DataLoader(
     trainset,

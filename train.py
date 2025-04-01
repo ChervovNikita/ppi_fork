@@ -42,6 +42,8 @@ def train(model, device, trainloader, optimizer, epoch, num_epochs):
   predictions_tr = torch.Tensor()
   scheduler = MultiStepLR(optimizer, milestones=[1,5], gamma=0.5)
   labels_tr = torch.Tensor()
+  total_loss = 0
+  total_count = 0
   loop = tqdm(trainloader, total=len(trainloader), desc=f'Epoch {epoch}/{num_epochs}')
   for count,(prot_1, prot_2, label, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped) in enumerate(loop):
     prot_1 = prot_1.to(device)
@@ -57,11 +59,13 @@ def train(model, device, trainloader, optimizer, epoch, num_epochs):
     loss = loss_func(output, label.view(-1,1).float().to(device))
     loss.backward()
     optimizer.step()
+    total_loss += loss.item()
+    total_count += mas1_straight.shape[0]
   scheduler.step()
   labels_tr = labels_tr.detach().numpy()
   predictions_tr = torch.sigmoid(torch.tensor(predictions_tr)).numpy()
   acc_tr = get_accuracy(labels_tr, predictions_tr, 0.5)
-  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - train_loss : {loss} - train_accuracy : {acc_tr}')
+  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - train_loss : {total_loss / total_count} - train_accuracy : {acc_tr}')
     
  
 

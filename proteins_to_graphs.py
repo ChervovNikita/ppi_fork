@@ -29,8 +29,10 @@ from Bio.PDB.PDBParser import PDBParser
 
 
 # ftrs = np.load("../human_features/pdb_to_seqvec_dict.npy", allow_pickle=True)
+print('hi')
 tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5_fp16', do_lower_case=False)
 model = T5EncoderModel.from_pretrained("Rostlab/ProstT5_fp16").to(device).half()
+print('hi2')
 
 # list of 20 proteins
 pro_res_table = [
@@ -136,6 +138,7 @@ class ProteinDataset(Dataset):
 
     def process(self):
         # Read data into huge `Data` list.
+
         self.data = self.processed_paths
 
         data_list = []
@@ -301,4 +304,6 @@ class ProteinDataset(Dataset):
 
 
 # prot_graphs = ProteinDataset("../human_features/")
+print('hi3')
 prot_graphs = ProteinDataset("../masif_features/")
+prot_graphs.process()
