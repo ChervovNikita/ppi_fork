@@ -306,4 +306,4 @@ class ProteinDataset(Dataset):
 # prot_graphs = ProteinDataset("../human_features/")
 print('hi3')
 prot_graphs = ProteinDataset("../masif_features/")
-prot_graphs.process()
+# prot_graphs.process()

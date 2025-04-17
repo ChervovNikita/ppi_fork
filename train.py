@@ -10,6 +10,17 @@ import sklearn
 import torch_optimizer as optim
 from torch.optim.lr_scheduler import MultiStepLR, ReduceLROnPlateau
 from metrics import *
+import random
+
+# Set seeds for reproducibility
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)  # if using multi-GPU
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 device = torch.device("cuda:0") if torch.cuda.is_available() else torch.cuda("cpu")
 
@@ -19,7 +30,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
 from data_prepare import dataset, trainloader, testloader
-from models import GCNN, AttGNN
+from models import GCNN, AttGNN, GCNN_mutual_attention, GCNN_with_descriptors
 from torch_geometric.data import DataLoader as DataLoader_n
 
 print("Datalength")
@@ -60,7 +71,7 @@ def train(model, device, trainloader, optimizer, epoch, num_epochs):
     loss.backward()
     optimizer.step()
     total_loss += loss.item()
-    total_count += mas1_straight.shape[0]
+    total_count += len(prot_1.x) if hasattr(prot_1, 'x') else 1
   scheduler.step()
   labels_tr = labels_tr.detach().numpy()
   predictions_tr = torch.sigmoid(torch.tensor(predictions_tr)).numpy()
@@ -74,7 +85,8 @@ def predict(model, device, loader):
   predictions = torch.Tensor()
   labels = torch.Tensor()
   with torch.no_grad():
-    for prot_1, prot_2, label, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped in loader:
+    loop = tqdm(loader, total=len(loader), desc=f'Epoch {epoch}/{num_epochs}')
+    for prot_1, prot_2, label, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped in loop:
       prot_1 = prot_1.to(device)
       prot_2 = prot_2.to(device)
       mas1_straight = mas1_straight.to(device)
@@ -97,7 +109,7 @@ epochs_no_improve = 0
 early_stop = False
 
 
-model = GCNN()
+model = GCNN_mutual_attention(num_layers=1)
 model.to(device)
 num_epochs = 50
 loss_func = nn.BCEWithLogitsLoss()
@@ -109,7 +121,7 @@ for epoch in range(num_epochs):
   G, P = predict(model, device, testloader)
   loss = get_mse(G,P)
   accuracy = get_accuracy(G,P, 0.5)
-  print(f'Epoch [{epoch}/{num_epochs}] [==============================] - val_loss : {loss} - val_accuracy : {accuracy}')
+  print(f'Epoch [{epoch+1}/{num_epochs}] [==============================] - val_loss : {loss} - val_accuracy : {accuracy}')
   if(accuracy > best_accuracy):
     best_accuracy = accuracy
     best_acc_epoch = epoch
