@@ -136,7 +136,8 @@ base_dir = '../masif_features'
 processed_dir = os.path.join(base_dir, 'processed/')
 
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/fin_upd_test.npy')
-npy_file = os.path.join(base_dir, '/workspace/masif_features/npy_file_new(human_dataset).npy')
+# npy_file = os.path.join(base_dir, '/workspace/masif_features/full_data.npy')
+npy_file = os.path.join(base_dir, '/workspace/masif_features/new_train.npy')
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/test_mas.npy')
 dataset = LabelledDataset(npy_file=npy_file, processed_dir=processed_dir)
 final_pairs = np.load(npy_file)
