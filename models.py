@@ -48,6 +48,70 @@ class GCNN(nn.Module):
         out = self.final_fc(combined)
         return out
 
+class GCNN_desc_pool(nn.Module):
+    def __init__(self, n_output=1, num_features_pro=1024, output_dim=128, dropout=0.2, descriptor_dim=80):
+        super(GCNN_desc_pool, self).__init__()
+        print('GCNN Loaded')
+        self.n_output = n_output
+        self.pro1_conv1 = GCNConv(num_features_pro, num_features_pro)
+        self.pro1_fc1 = nn.Linear(num_features_pro, output_dim)
+        self.pro2_conv1 = GCNConv(num_features_pro, num_features_pro)
+        self.pro2_fc1 = nn.Linear(num_features_pro, output_dim)
+        
+        self.conv1d_mas1_straight = nn.Conv1d(descriptor_dim, output_dim, kernel_size=1)
+        self.conv1d_mas1_flipped = nn.Conv1d(descriptor_dim, output_dim, kernel_size=1)
+        self.conv1d_mas2_straight = nn.Conv1d(descriptor_dim, output_dim, kernel_size=1)
+        self.conv1d_mas2_flipped = nn.Conv1d(descriptor_dim, output_dim, kernel_size=1)
+        
+        # Max pooling
+        self.max_pool = nn.AdaptiveMaxPool1d(1)
+        
+        # Output processing
+        self.relu = nn.LeakyReLU()
+        self.dropout = nn.Dropout(dropout)
+        
+        # Final layers - combining graph and descriptor features
+        combined_dim = 2 * output_dim + 4 * output_dim  # 2 graph outputs + 4 descriptor outputs
+        self.final_fc = nn.Linear(combined_dim, self.n_output)
+
+    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped):
+        # Process protein 1 with GNN
+        pro1_x, pro1_edge_index, pro1_batch = pro1_data.x, pro1_data.edge_index, pro1_data.batch
+        x = self.pro1_conv1(pro1_x, pro1_edge_index)
+        x = self.relu(x)
+        x = gep(x, pro1_batch)
+        x = self.relu(self.pro1_fc1(x))
+        x = self.dropout(x)
+
+        # Process protein 2 with GNN
+        pro2_x, pro2_edge_index, pro2_batch = pro2_data.x, pro2_data.edge_index, pro2_data.batch
+        xt = self.pro2_conv1(pro2_x, pro2_edge_index)
+        xt = self.relu(xt)
+        xt = gep(xt, pro2_batch)
+        xt = self.relu(self.pro2_fc1(xt))
+        xt = self.dropout(xt)
+
+        # Process descriptors with 1D convolutions
+        # Transpose for conv1d (B, L, D) -> (B, D, L)
+        mas1_straight = mas1_straight.transpose(1, 2)
+        mas1_flipped = mas1_flipped.transpose(1, 2)
+        mas2_straight = mas2_straight.transpose(1, 2)
+        mas2_flipped = mas2_flipped.transpose(1, 2)
+
+        # Apply convolutions and pooling
+        mas1_straight = self.max_pool(self.relu(self.conv1d_mas1_straight(mas1_straight))).squeeze(-1)
+        mas1_flipped = self.max_pool(self.relu(self.conv1d_mas1_flipped(mas1_flipped))).squeeze(-1)
+        mas2_straight = self.max_pool(self.relu(self.conv1d_mas2_straight(mas2_straight))).squeeze(-1)
+        mas2_flipped = self.max_pool(self.relu(self.conv1d_mas2_flipped(mas2_flipped))).squeeze(-1)
+
+        print(mas1_straight.shape)
+
+        # Concatenate all features
+        combined = torch.cat([x, xt, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped], dim=1)
+        
+        # Final prediction (logits)
+        out = self.final_fc(combined)
+        return out
 
 class GCNN_with_descriptors(nn.Module):
     def __init__(self, n_output=1, num_features_pro=1024, output_dim=128, dropout=0.2, descriptor_dim=80, transformer_dim=32, nhead=4, num_layers=2, dim_feedforward=128):

@@ -30,7 +30,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
 from data_prepare import dataset, trainloader, testloader
-from models import GCNN, AttGNN, GCNN_mutual_attention, GCNN_with_descriptors
+from models import GCNN, AttGNN, GCNN_mutual_attention, GCNN_with_descriptors, GCNN_desc_pool
 from torch_geometric.data import DataLoader as DataLoader_n
 
 print("Datalength")
@@ -110,8 +110,10 @@ early_stop = False
 
 
 # model = GCNN_mutual_attention(num_layers=1) [85.69242540168325, 87.28943338437979, 87.36600306278713, 86.75344563552832, 89.82402448355012] == simple_run
-# model = GCNN() [86.52373660030628, 86.67687595712098, 87.67228177641654, 85.6159143075746, 89.28844682478959] == baseline_run
-model = GCNN_with_descriptors(num_features_pro=1024, output_dim=128, dropout=0.2, descriptor_dim=80, transformer_dim=31, nhead=4, num_layers=2, dim_feedforward=128)
+model = GCNN() # [86.52373660030628, 86.67687595712098, 87.67228177641654, 85.6159143075746, 89.28844682478959] == baseline_run
+# model = GCNN_with_descriptors(num_features_pro=1024, output_dim=128, dropout=0.2, descriptor_dim=80, transformer_dim=31, nhead=4, num_layers=2, dim_feedforward=128)
+# []
+# model = GCNN_desc_pool()
 model.to(device)
 num_epochs = 50
 loss_func = nn.BCEWithLogitsLoss()
