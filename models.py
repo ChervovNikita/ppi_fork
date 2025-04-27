@@ -110,8 +110,11 @@ class GCNN_with_descriptors(nn.Module):
         batch_size = mas1_straight.size(0)
         
         # Prepare indicators
-        straight_indicator = torch.ones((*mas1_straight.shape[:-1], 1), device=mas1_straight.device)
-        flipped_indicator = torch.zeros((*mas1_flipped.shape[:-1], 1), device=mas1_flipped.device)
+        straight_indicator_mas1 = torch.ones((*mas1_straight.shape[:-1], 1), device=mas1_straight.device)
+        flipped_indicator_mas1 = torch.zeros((*mas1_flipped.shape[:-1], 1), device=mas1_flipped.device)
+
+        straight_indicator_mas2 = torch.ones((*mas2_straight.shape[:-1], 1), device=mas2_straight.device)
+        flipped_indicator_mas2 = torch.zeros((*mas2_flipped.shape[:-1], 1), device=mas2_flipped.device)
         
         mas1_straight = self.reducer(mas1_straight)
         mas1_flipped = self.reducer(mas1_flipped)
@@ -119,10 +122,10 @@ class GCNN_with_descriptors(nn.Module):
         mas2_flipped = self.reducer(mas2_flipped)
 
         # Concatenate descriptors with indicators
-        mas1_straight = torch.cat([mas1_straight, straight_indicator], dim=-1)
-        mas1_flipped = torch.cat([mas1_flipped, flipped_indicator], dim=-1)
-        mas2_straight = torch.cat([mas2_straight, straight_indicator], dim=-1)
-        mas2_flipped = torch.cat([mas2_flipped, flipped_indicator], dim=-1)
+        mas1_straight = torch.cat([mas1_straight, straight_indicator_mas1], dim=-1)
+        mas1_flipped = torch.cat([mas1_flipped, flipped_indicator_mas1], dim=-1)
+        mas2_straight = torch.cat([mas2_straight, straight_indicator_mas2], dim=-1)
+        mas2_flipped = torch.cat([mas2_flipped, flipped_indicator_mas2], dim=-1)
         
         # Process through transformers
         # Combine straight and flipped for each protein

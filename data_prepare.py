@@ -9,6 +9,13 @@ from os.path import isfile, join
 from torch.utils.data import Dataset as Dataset_n
 from torch.utils.data import DataLoader  # <-- from standard PyTorch
 from torch_geometric.data import Data, Batch
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--npy_file', type=str, default='../masif_features/new_train.npy')
+parser.add_argument('--cv_fold', type=int, default=5)
+parser.add_argument('--cv_fold_idx', type=int, default=0)
+args = parser.parse_args()
 
 # Set seeds for reproducibility
 SEED = 42
@@ -137,7 +144,7 @@ processed_dir = os.path.join(base_dir, 'processed/')
 
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/fin_upd_test.npy')
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/full_data.npy')
-npy_file = os.path.join(base_dir, '/workspace/masif_features/new_train.npy')
+npy_file = os.path.join(base_dir, args.npy_file)
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/test_mas.npy')
 dataset = LabelledDataset(npy_file=npy_file, processed_dir=processed_dir)
 final_pairs = np.load(npy_file)
@@ -148,7 +155,22 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
 
-trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
+indexes = list(range(size))
+random.shuffle(indexes, random.seed(SEED))
+
+train_ids = []
+test_ids = []
+
+for i in range(args.cv_fold):
+    if i == args.cv_fold_idx:
+        test_ids.extend(indexes[i::args.cv_fold])
+    else:
+        train_ids.extend(indexes[i::args.cv_fold])
+
+trainset = torch.utils.data.Subset(dataset, train_ids)
+testset = torch.utils.data.Subset(dataset, test_ids)
+
+# trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
 
 # trainset = dataset
 # npy_test_file = os.path.join(base_dir, 'fin_upd_test.npy')
