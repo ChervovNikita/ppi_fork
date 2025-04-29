@@ -113,7 +113,8 @@ early_stop = False
 # model = GCNN() # [86.52373660030628, 86.67687595712098, 87.67228177641654, 85.6159143075746, 89.28844682478959] == baseline_run
 # model = GCNN_with_descriptors(num_features_pro=1024, output_dim=128, dropout=0.2, descriptor_dim=80, transformer_dim=31, nhead=4, num_layers=2, dim_feedforward=128)
 # []
-model = GCNN_desc_pool()
+# model = GCNN_desc_pool()
+model = GCNN_mutual_attention(num_layers=1, dropout=0.3)
 model.to(device)
 num_epochs = 50
 loss_func = nn.BCEWithLogitsLoss()
