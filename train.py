@@ -29,19 +29,19 @@ import networkx as nx
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
-from data_prepare import dataset, trainloader, testloader
+from data_prepare import trainloader, testloader
 from models import GCNN, AttGNN, GCNN_mutual_attention, GCNN_with_descriptors, GCNN_desc_pool
 from torch_geometric.data import DataLoader as DataLoader_n
 
 print("Datalength")
-print(len(dataset))
+# print(len(dataset))
 print(len(trainloader))
 print(len(testloader))
 
 
 
-total_samples = len(dataset)
-n_iterations = math.ceil(total_samples/5)
+# total_samples = len(dataset)
+# n_iterations = math.ceil(total_samples/5)
 
  
 #utilities
@@ -114,7 +114,8 @@ early_stop = False
 # model = GCNN_with_descriptors(num_features_pro=1024, output_dim=128, dropout=0.2, descriptor_dim=80, transformer_dim=31, nhead=4, num_layers=2, dim_feedforward=128)
 # []
 # model = GCNN_desc_pool()
-model = GCNN_mutual_attention(num_layers=1, dropout=0.3)
+# model = GCNN_with_descriptors(num_layers=1, dropout=0.1, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=31, nhead=4, dim_feedforward=128)
+model = GCNN()
 model.to(device)
 num_epochs = 50
 loss_func = nn.BCEWithLogitsLoss()
@@ -130,7 +131,7 @@ for epoch in range(num_epochs):
   if(accuracy > best_accuracy):
     best_accuracy = accuracy
     best_acc_epoch = epoch
-    torch.save(model.state_dict(), "../masif_features/GCN.pth") #path to save the model
+    torch.save(model.state_dict(), "../masif_features/GCN_baseline.pth") #path to save the model
     print("Model")
   if(loss< min_loss):
     epochs_no_improve = 0

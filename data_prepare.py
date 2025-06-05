@@ -12,10 +12,11 @@ from torch_geometric.data import Data, Batch
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--npy_file', type=str, default='../masif_features/new_train.npy')
-parser.add_argument('--cv_fold', type=int, default=5)
-parser.add_argument('--cv_fold_idx', type=int, default=0)
-args = parser.parse_args()
+# parser.add_argument('--npy_file', type=str, default='../masif_features/new_train.npy')
+# parser.add_argument('--cv_fold', type=int, default=5)
+# parser.add_argument('--cv_fold_idx', type=int, default=0)
+# args = parser.parse_args
+# args, unknown = parser.parse_known_args()    # remove after test (David) 
 
 # Set seeds for reproducibility
 SEED = 42
@@ -48,9 +49,9 @@ class LabelledDataset(Dataset_n):
         prot_2 = os.path.join(self.processed_dir, self.protein_2[index]+".pt")
         
         # print(prot_1)
-        prot_1 = torch.load(glob.glob(prot_1)[0])
+        prot_1 = torch.load(glob.glob(prot_1)[0], weights_only=False)
         # print(prot_2)
-        prot_2 = torch.load(glob.glob(prot_2)[0])
+        prot_2 = torch.load(glob.glob(prot_2)[0], weights_only=False)
         prot_1 = bump(prot_1)
         prot_2 = bump(prot_2)
         prot_1.x = prot_1.x.to(torch.float32)
@@ -139,36 +140,103 @@ def collate_fn(batch):
     batch_2 = Batch.from_data_list(prot_2s)
     return batch_1, batch_2, labels, p1_straight_padded, p1_flipped_padded, p2_straight_padded, p2_flipped_padded
 
+def collate_fn_unpadded(batch):
+    """
+    New collate function that returns unpadded descriptors with length information.
+    For use with GCNN_geom_transformer to avoid double padding.
+    """
+    prot_1s = [item[0] for item in batch]
+    prot_2s = [item[1] for item in batch]
+    labels = torch.stack([item[2] for item in batch])
+    p1_straight = [item[3] for item in batch]
+    p1_flipped = [item[4] for item in batch]
+    p2_straight = [item[5] for item in batch]
+    p2_flipped = [item[6] for item in batch]
+
+    # Collect actual sequence lengths
+    p1_straight_lengths = torch.tensor([x.size(0) for x in p1_straight], dtype=torch.long)
+    p1_flipped_lengths = torch.tensor([x.size(0) for x in p1_flipped], dtype=torch.long)
+    p2_straight_lengths = torch.tensor([x.size(0) for x in p2_straight], dtype=torch.long)
+    p2_flipped_lengths = torch.tensor([x.size(0) for x in p2_flipped], dtype=torch.long)
+
+    # Find maximum lengths
+    max_len_p1_straight = max(x.size(0) for x in p1_straight)
+    max_len_p1_flipped = max(x.size(0) for x in p1_flipped)
+    max_len_p2_straight = max(x.size(0) for x in p2_straight)
+    max_len_p2_flipped = max(x.size(0) for x in p2_flipped)
+
+    # Pad sequences
+    p1_straight_padded = []
+    for x in p1_straight:
+        tmp = torch.zeros((max_len_p1_straight, x.size(1)))
+        tmp[:x.size(0)] = x
+        p1_straight_padded.append(tmp)
+
+    p1_flipped_padded = []
+    for x in p1_flipped:
+        tmp = torch.zeros((max_len_p1_flipped, x.size(1)))
+        tmp[:x.size(0)] = x
+        p1_flipped_padded.append(tmp)
+
+    p2_straight_padded = []
+    for x in p2_straight:
+        tmp = torch.zeros((max_len_p2_straight, x.size(1)))
+        tmp[:x.size(0)] = x
+        p2_straight_padded.append(tmp)
+
+    p2_flipped_padded = []
+    for x in p2_flipped:
+        tmp = torch.zeros((max_len_p2_flipped, x.size(1)))
+        tmp[:x.size(0)] = x
+        p2_flipped_padded.append(tmp)
+
+    p1_straight_padded = torch.stack(p1_straight_padded, dim=0)
+    p1_flipped_padded = torch.stack(p1_flipped_padded, dim=0)
+    p2_straight_padded = torch.stack(p2_straight_padded, dim=0)
+    p2_flipped_padded = torch.stack(p2_flipped_padded, dim=0)
+
+    batch_1 = Batch.from_data_list(prot_1s)
+    batch_2 = Batch.from_data_list(prot_2s)
+    
+    # Return padded descriptors + length information
+    return (batch_1, batch_2, labels, 
+            p1_straight_padded, p1_flipped_padded, p2_straight_padded, p2_flipped_padded,
+            p1_straight_lengths, p1_flipped_lengths, p2_straight_lengths, p2_flipped_lengths)
+
 base_dir = '../masif_features'
 processed_dir = os.path.join(base_dir, 'processed/')
 
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/fin_upd_test.npy')
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/full_data.npy')
-npy_file = os.path.join(base_dir, args.npy_file)
+train_npy_file = os.path.join(base_dir, 'trainset.npy')
+test_npy_file = os.path.join(base_dir, 'valset.npy')
+final_test_npy_file = os.path.join(base_dir, 'testset.npy')
 # npy_file = os.path.join(base_dir, '/workspace/masif_features/test_mas.npy')
-dataset = LabelledDataset(npy_file=npy_file, processed_dir=processed_dir)
-final_pairs = np.load(npy_file)
-size = final_pairs.shape[0]
+trainset = LabelledDataset(npy_file=train_npy_file, processed_dir=processed_dir)
+testset = LabelledDataset(npy_file=test_npy_file, processed_dir=processed_dir)
+final_testset = LabelledDataset(npy_file=final_test_npy_file, processed_dir=processed_dir)
+# final_pairs = np.load(npy_file)
+# size = final_pairs.shape[0]
 
 # Using the same seed defined at the top of the file
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
 
-indexes = list(range(size))
-random.shuffle(indexes, random.seed(SEED))
+# indexes = list(range(size))
+# random.shuffle(indexes, random.seed(SEED))
 
-train_ids = []
-test_ids = []
+# train_ids = []
+# test_ids = []
 
-for i in range(args.cv_fold):
-    if i == args.cv_fold_idx:
-        test_ids.extend(indexes[i::args.cv_fold])
-    else:
-        train_ids.extend(indexes[i::args.cv_fold])
+# for i in range(args.cv_fold):
+#     if i == args.cv_fold_idx:
+#         test_ids.extend(indexes[i::args.cv_fold])
+#     else:
+#         train_ids.extend(indexes[i::args.cv_fold])
 
-trainset = torch.utils.data.Subset(dataset, train_ids)
-testset = torch.utils.data.Subset(dataset, test_ids)
+# trainset = torch.utils.data.Subset(dataset, train_ids)
+# testset = torch.utils.data.Subset(dataset, test_ids)
 
 # trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
 
@@ -187,6 +255,15 @@ trainloader = DataLoader(
 
 testloader = DataLoader(
     testset,
+    batch_size=4,
+    num_workers=0,
+    shuffle=False,
+    collate_fn=collate_fn,  # crucial
+    worker_init_fn=lambda worker_id: np.random.seed(SEED + worker_id)  # Set seed for dataloader workers
+)
+
+final_testloader = DataLoader(
+    final_testset,
     batch_size=4,
     num_workers=0,
     shuffle=False,
