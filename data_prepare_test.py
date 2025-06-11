@@ -203,64 +203,17 @@ def collate_fn_unpadded(batch):
             p1_straight_padded, p1_flipped_padded, p2_straight_padded, p2_flipped_padded,
             p1_straight_lengths, p1_flipped_lengths, p2_straight_lengths, p2_flipped_lengths)
 
-base_dir = '../masif_features'
+base_dir = '../masif_test'
 processed_dir = os.path.join(base_dir, 'processed/')
 
-# npy_file = os.path.join(base_dir, '/workspace/masif_features/fin_upd_test.npy')
-# npy_file = os.path.join(base_dir, '/workspace/masif_features/full_data.npy')
-train_npy_file = os.path.join(base_dir, 'trainset.npy')
-test_npy_file = os.path.join(base_dir, 'valset.npy')
 final_test_npy_file = os.path.join(base_dir, 'testset.npy')
-# npy_file = os.path.join(base_dir, '/workspace/masif_features/test_mas.npy')
-trainset = LabelledDataset(npy_file=train_npy_file, processed_dir=processed_dir)
-testset = LabelledDataset(npy_file=test_npy_file, processed_dir=processed_dir)
-final_testset = LabelledDataset(npy_file=final_test_npy_file, processed_dir=processed_dir)
-# final_pairs = np.load(npy_file)
-# size = final_pairs.shape[0]
 
-# Using the same seed defined at the top of the file
+final_testset = LabelledDataset(npy_file=final_test_npy_file, processed_dir=processed_dir)
+
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
 
-# indexes = list(range(size))
-# random.shuffle(indexes, random.seed(SEED))
-
-# train_ids = []
-# test_ids = []
-
-# for i in range(args.cv_fold):
-#     if i == args.cv_fold_idx:
-#         test_ids.extend(indexes[i::args.cv_fold])
-#     else:
-#         train_ids.extend(indexes[i::args.cv_fold])
-
-# trainset = torch.utils.data.Subset(dataset, train_ids)
-# testset = torch.utils.data.Subset(dataset, test_ids)
-
-# trainset, testset = torch.utils.data.random_split(dataset, [math.floor(0.8 * size), size - math.floor(0.8 * size)])
-
-# trainset = dataset
-# npy_test_file = os.path.join(base_dir, 'fin_upd_test.npy')
-# testset = LabelledDataset(npy_file=npy_test_file, processed_dir=processed_dir, desc=False)
-
-trainloader = DataLoader(
-    trainset,
-    batch_size=1,
-    num_workers=0,
-    shuffle=True,
-    collate_fn=collate_fn_unpadded,  # crucial
-    worker_init_fn=lambda worker_id: np.random.seed(SEED + worker_id)  # Set seed for dataloader workers
-)
-
-testloader = DataLoader(
-    testset,
-    batch_size=1,
-    num_workers=0,
-    shuffle=False,
-    collate_fn=collate_fn_unpadded,  # crucial
-    worker_init_fn=lambda worker_id: np.random.seed(SEED + worker_id)  # Set seed for dataloader workers
-)
 
 final_testloader = DataLoader(
     final_testset,

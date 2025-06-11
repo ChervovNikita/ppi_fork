@@ -24,7 +24,7 @@ class GCNN(nn.Module):
         combined_dim = 2 * output_dim
         self.final_fc = nn.Linear(combined_dim, self.n_output)
 
-    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped):
+    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped, mas1_straight_lengths, mas1_flipped_lengths, mas2_straight_lengths, mas2_flipped_lengths):
         # Process protein 1 with GNN
         pro1_x, pro1_edge_index, pro1_batch = pro1_data.x, pro1_data.edge_index, pro1_data.batch
         x = self.pro1_conv1(pro1_x, pro1_edge_index)
@@ -41,7 +41,7 @@ class GCNN(nn.Module):
         xt = self.relu(self.pro2_fc1(xt))
         xt = self.dropout(xt)
 
-        # Concatenate GNN features only
+        # Concatenate GNN features only (ignore descriptors and lengths)
         combined = torch.cat([x, xt], dim=1)
         
         # Final prediction (logits)
@@ -74,7 +74,7 @@ class GCNN_desc_pool(nn.Module):
         combined_dim = 2 * output_dim + 4 * output_dim  # 2 graph outputs + 4 descriptor outputs
         self.final_fc = nn.Linear(combined_dim, self.n_output)
 
-    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped):
+    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped, mas1_straight_lengths, mas1_flipped_lengths, mas2_straight_lengths, mas2_flipped_lengths):
         # Process protein 1 with GNN
         pro1_x, pro1_edge_index, pro1_batch = pro1_data.x, pro1_data.edge_index, pro1_data.batch
         x = self.pro1_conv1(pro1_x, pro1_edge_index)
@@ -91,23 +91,46 @@ class GCNN_desc_pool(nn.Module):
         xt = self.relu(self.pro2_fc1(xt))
         xt = self.dropout(xt)
 
-        # Process descriptors with 1D convolutions
-        # Transpose for conv1d (B, L, D) -> (B, D, L)
-        mas1_straight = mas1_straight.transpose(1, 2)
-        mas1_flipped = mas1_flipped.transpose(1, 2)
-        mas2_straight = mas2_straight.transpose(1, 2)
-        mas2_flipped = mas2_flipped.transpose(1, 2)
-
-        # Apply convolutions and pooling
-        mas1_straight = self.max_pool(self.relu(self.conv1d_mas1_straight(mas1_straight))).squeeze(-1)
-        mas1_flipped = self.max_pool(self.relu(self.conv1d_mas1_flipped(mas1_flipped))).squeeze(-1)
-        mas2_straight = self.max_pool(self.relu(self.conv1d_mas2_straight(mas2_straight))).squeeze(-1)
-        mas2_flipped = self.max_pool(self.relu(self.conv1d_mas2_flipped(mas2_flipped))).squeeze(-1)
-
-        print(mas1_straight.shape)
+        # Process descriptors with 1D convolutions using only real (non-padded) portions
+        batch_size = mas1_straight.size(0)
+        
+        mas1_straight_processed = []
+        mas1_flipped_processed = []
+        mas2_straight_processed = []
+        mas2_flipped_processed = []
+        
+        for i in range(batch_size):
+            # Get actual lengths for this sample
+            mas1_straight_len = mas1_straight_lengths[i].item()
+            mas1_flipped_len = mas1_flipped_lengths[i].item()
+            mas2_straight_len = mas2_straight_lengths[i].item()
+            mas2_flipped_len = mas2_flipped_lengths[i].item()
+            
+            # Extract only real (non-padded) portions and transpose for conv1d
+            mas1_s_real = mas1_straight[i][:mas1_straight_len].transpose(0, 1).unsqueeze(0)  # (1, D, L)
+            mas1_f_real = mas1_flipped[i][:mas1_flipped_len].transpose(0, 1).unsqueeze(0)    # (1, D, L)
+            mas2_s_real = mas2_straight[i][:mas2_straight_len].transpose(0, 1).unsqueeze(0)  # (1, D, L)
+            mas2_f_real = mas2_flipped[i][:mas2_flipped_len].transpose(0, 1).unsqueeze(0)    # (1, D, L)
+            
+            # Apply convolutions and global max pooling (which handles variable lengths)
+            mas1_s_out = self.max_pool(self.relu(self.conv1d_mas1_straight(mas1_s_real))).squeeze(-1).squeeze(0)  # (output_dim,)
+            mas1_f_out = self.max_pool(self.relu(self.conv1d_mas1_flipped(mas1_f_real))).squeeze(-1).squeeze(0)    # (output_dim,)
+            mas2_s_out = self.max_pool(self.relu(self.conv1d_mas2_straight(mas2_s_real))).squeeze(-1).squeeze(0)  # (output_dim,)
+            mas2_f_out = self.max_pool(self.relu(self.conv1d_mas2_flipped(mas2_f_real))).squeeze(-1).squeeze(0)    # (output_dim,)
+            
+            mas1_straight_processed.append(mas1_s_out)
+            mas1_flipped_processed.append(mas1_f_out)
+            mas2_straight_processed.append(mas2_s_out)
+            mas2_flipped_processed.append(mas2_f_out)
+        
+        # Stack to create batch tensors
+        mas1_straight_batch = torch.stack(mas1_straight_processed, dim=0)  # (B, output_dim)
+        mas1_flipped_batch = torch.stack(mas1_flipped_processed, dim=0)    # (B, output_dim)
+        mas2_straight_batch = torch.stack(mas2_straight_processed, dim=0)  # (B, output_dim)
+        mas2_flipped_batch = torch.stack(mas2_flipped_processed, dim=0)    # (B, output_dim)
 
         # Concatenate all features
-        combined = torch.cat([x, xt, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped], dim=1)
+        combined = torch.cat([x, xt, mas1_straight_batch, mas1_flipped_batch, mas2_straight_batch, mas2_flipped_batch], dim=1)
         
         # Final prediction (logits)
         out = self.final_fc(combined)
@@ -152,7 +175,7 @@ class GCNN_with_descriptors(nn.Module):
         combined_dim = 2 * output_dim + 2 * (self.transformer_dim + 1)
         self.final_fc = nn.Linear(combined_dim, self.n_output)
 
-    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped):
+    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped, mas1_straight_lengths, mas1_flipped_lengths, mas2_straight_lengths, mas2_flipped_lengths):
         # Process protein 1 with GNN
         pro1_x, pro1_edge_index, pro1_batch = pro1_data.x, pro1_data.edge_index, pro1_data.batch
         x = self.pro1_conv1(pro1_x, pro1_edge_index)
@@ -170,43 +193,102 @@ class GCNN_with_descriptors(nn.Module):
         xt = self.dropout(xt)
 
         # Process masif descriptors with transformers
-        # Add indicator (0/1) for straight/flipped
         batch_size = mas1_straight.size(0)
         
-        # Prepare indicators
-        straight_indicator_mas1 = torch.ones((*mas1_straight.shape[:-1], 1), device=mas1_straight.device)
-        flipped_indicator_mas1 = torch.zeros((*mas1_flipped.shape[:-1], 1), device=mas1_flipped.device)
-
-        straight_indicator_mas2 = torch.ones((*mas2_straight.shape[:-1], 1), device=mas2_straight.device)
-        flipped_indicator_mas2 = torch.zeros((*mas2_flipped.shape[:-1], 1), device=mas2_flipped.device)
+        # Create sequences for each sample in the batch using only real (non-padded) portions
+        mas1_sequences = []
+        mas2_sequences = []
         
-        mas1_straight = self.reducer(mas1_straight)
-        mas1_flipped = self.reducer(mas1_flipped)
-        mas2_straight = self.reducer(mas2_straight)
-        mas2_flipped = self.reducer(mas2_flipped)
-
-        # Concatenate descriptors with indicators
-        mas1_straight = torch.cat([mas1_straight, straight_indicator_mas1], dim=-1)
-        mas1_flipped = torch.cat([mas1_flipped, flipped_indicator_mas1], dim=-1)
-        mas2_straight = torch.cat([mas2_straight, straight_indicator_mas2], dim=-1)
-        mas2_flipped = torch.cat([mas2_flipped, flipped_indicator_mas2], dim=-1)
+        for i in range(batch_size):
+            # Get actual lengths for this sample
+            mas1_straight_len = mas1_straight_lengths[i].item()
+            mas1_flipped_len = mas1_flipped_lengths[i].item()
+            mas2_straight_len = mas2_straight_lengths[i].item()
+            mas2_flipped_len = mas2_flipped_lengths[i].item()
+            
+            # Extract only real (non-padded) portions
+            mas1_straight_real = mas1_straight[i][:mas1_straight_len]
+            mas1_flipped_real = mas1_flipped[i][:mas1_flipped_len]
+            mas2_straight_real = mas2_straight[i][:mas2_straight_len]
+            mas2_flipped_real = mas2_flipped[i][:mas2_flipped_len]
+            
+            # Project through reducers
+            mas1_straight_proj = self.reducer(mas1_straight_real)
+            mas1_flipped_proj = self.reducer(mas1_flipped_real)
+            mas2_straight_proj = self.reducer(mas2_straight_real)
+            mas2_flipped_proj = self.reducer(mas2_flipped_real)
+            
+            # Add indicator tokens
+            straight_indicator_mas1 = torch.ones((mas1_straight_len, 1), device=mas1_straight.device)
+            flipped_indicator_mas1 = torch.zeros((mas1_flipped_len, 1), device=mas1_flipped.device)
+            straight_indicator_mas2 = torch.ones((mas2_straight_len, 1), device=mas2_straight.device)
+            flipped_indicator_mas2 = torch.zeros((mas2_flipped_len, 1), device=mas2_flipped.device)
+            
+            # Concatenate descriptors with indicators
+            mas1_straight_with_ind = torch.cat([mas1_straight_proj, straight_indicator_mas1], dim=-1)
+            mas1_flipped_with_ind = torch.cat([mas1_flipped_proj, flipped_indicator_mas1], dim=-1)
+            mas2_straight_with_ind = torch.cat([mas2_straight_proj, straight_indicator_mas2], dim=-1)
+            mas2_flipped_with_ind = torch.cat([mas2_flipped_proj, flipped_indicator_mas2], dim=-1)
+            
+            # Combine straight and flipped for each protein
+            mas1_combined = torch.cat([mas1_straight_with_ind, mas1_flipped_with_ind], dim=0)
+            mas2_combined = torch.cat([mas2_straight_with_ind, mas2_flipped_with_ind], dim=0)
+            
+            mas1_sequences.append(mas1_combined)
+            mas2_sequences.append(mas2_combined)
         
-        # Process through transformers
-        # Combine straight and flipped for each protein
-        mas1 = torch.cat([mas1_straight, mas1_flipped], dim=1)
-        mas2 = torch.cat([mas2_straight, mas2_flipped], dim=1)
+        # Pad sequences to same length for transformer processing
+        max_len_mas1 = max(seq.size(0) for seq in mas1_sequences)
+        max_len_mas2 = max(seq.size(0) for seq in mas2_sequences)
         
-        # Transform sequences (B, L, D) -> (L, B, D) for transformer
-        mas1 = mas1.transpose(0, 1)
-        mas2 = mas2.transpose(0, 1)
-
-        # Apply transformers
-        mas1_out = self.transformer(mas1)
-        mas2_out = self.transformer(mas2)
+        mas1_padded = []
+        mas2_padded = []
+        mas1_masks = []
+        mas2_masks = []
         
-        # Get mean of transformer outputs for global representation
-        mas1_out = mas1_out.mean(dim=0)
-        mas2_out = mas2_out.mean(dim=0)
+        for mas1_seq, mas2_seq in zip(mas1_sequences, mas2_sequences):
+            # Pad mas1
+            mas1_len = mas1_seq.size(0)
+            if mas1_len < max_len_mas1:
+                padding = torch.zeros(max_len_mas1 - mas1_len, mas1_seq.size(1), device=mas1_seq.device)
+                mas1_padded.append(torch.cat([mas1_seq, padding], dim=0))
+                mask = torch.cat([torch.ones(mas1_len, device=mas1_seq.device), torch.zeros(max_len_mas1 - mas1_len, device=mas1_seq.device)]).bool()
+            else:
+                mas1_padded.append(mas1_seq)
+                mask = torch.ones(mas1_len, device=mas1_seq.device).bool()
+            mas1_masks.append(mask)
+            
+            # Pad mas2
+            mas2_len = mas2_seq.size(0)
+            if mas2_len < max_len_mas2:
+                padding = torch.zeros(max_len_mas2 - mas2_len, mas2_seq.size(1), device=mas2_seq.device)
+                mas2_padded.append(torch.cat([mas2_seq, padding], dim=0))
+                mask = torch.cat([torch.ones(mas2_len, device=mas2_seq.device), torch.zeros(max_len_mas2 - mas2_len, device=mas2_seq.device)]).bool()
+            else:
+                mas2_padded.append(mas2_seq)
+                mask = torch.ones(mas2_len, device=mas2_seq.device).bool()
+            mas2_masks.append(mask)
+        
+        # Stack and transpose for transformer
+        mas1_batch = torch.stack(mas1_padded, dim=0).transpose(0, 1)  # (L, B, D)
+        mas2_batch = torch.stack(mas2_padded, dim=0).transpose(0, 1)  # (L, B, D)
+        mas1_mask = torch.stack(mas1_masks, dim=0)  # (B, L)
+        mas2_mask = torch.stack(mas2_masks, dim=0)  # (B, L)
+        
+        # Apply transformers with proper masking
+        mas1_out = self.transformer(mas1_batch, src_key_padding_mask=~mas1_mask)
+        mas2_out = self.transformer(mas2_batch, src_key_padding_mask=~mas2_mask)
+        
+        # Global representation: mean only over non-padded positions
+        mas1_out = mas1_out.transpose(0, 1)  # (B, L, D)
+        mas2_out = mas2_out.transpose(0, 1)  # (B, L, D)
+        
+        # Masked mean pooling
+        mas1_out_masked = mas1_out * mas1_mask.unsqueeze(-1).float()
+        mas2_out_masked = mas2_out * mas2_mask.unsqueeze(-1).float()
+        
+        mas1_out = mas1_out_masked.sum(dim=1) / mas1_mask.sum(dim=1, keepdim=True).float()
+        mas2_out = mas2_out_masked.sum(dim=1) / mas2_mask.sum(dim=1, keepdim=True).float()
 
         # Concatenate all features
         combined = torch.cat([x, xt, mas1_out, mas2_out], dim=1)
@@ -254,7 +336,7 @@ class GCNN_mutual_attention(nn.Module):
         combined_dim = 2 * output_dim + self.transformer_dim
         self.final_fc = nn.Linear(combined_dim, self.n_output)
 
-    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped):
+    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped, mas1_straight_lengths, mas1_flipped_lengths, mas2_straight_lengths, mas2_flipped_lengths):
         # Process protein 1 with GNN
         pro1_x, pro1_edge_index, pro1_batch = pro1_data.x, pro1_data.edge_index, pro1_data.batch
         x = self.pro1_conv1(pro1_x, pro1_edge_index)
@@ -271,43 +353,84 @@ class GCNN_mutual_attention(nn.Module):
         xt = self.relu(self.pro2_fc1(xt))
         xt = self.dropout(xt)
 
-        # Process masif descriptors with transformers
-        # Add indicator (0/1) for straight/flipped
+        # Process masif descriptors with transformers using length information
         batch_size = mas1_straight.size(0)
         
-        # Prepare indicators
-        straight_indicator_mas1 = torch.ones((*mas1_straight.shape[:-1], 1), device=mas1_straight.device)
-        flipped_indicator_mas1 = torch.zeros((*mas1_flipped.shape[:-1], 1), device=mas1_flipped.device)
-
-        straight_indicator_mas2 = torch.ones((*mas2_straight.shape[:-1], 1), device=mas2_straight.device)
-        flipped_indicator_mas2 = torch.zeros((*mas2_flipped.shape[:-1], 1), device=mas2_flipped.device)
+        # Create combined sequences for each sample in the batch using only real (non-padded) portions
+        mas_sequences = []
         
-        first_indicator = torch.ones((*mas1_straight.shape[:-1], 1), device=mas1_straight.device)
-        second_indicator = torch.zeros((*mas2_flipped.shape[:-1], 1), device=mas2_flipped.device)
-
-        mas1_straight = self.reducer(mas1_straight)
-        mas1_flipped = self.reducer(mas1_flipped)
-        mas2_straight = self.reducer(mas2_straight)
-        mas2_flipped = self.reducer(mas2_flipped)
+        for i in range(batch_size):
+            # Get actual lengths for this sample
+            mas1_straight_len = mas1_straight_lengths[i].item()
+            mas1_flipped_len = mas1_flipped_lengths[i].item()
+            mas2_straight_len = mas2_straight_lengths[i].item()
+            mas2_flipped_len = mas2_flipped_lengths[i].item()
+            
+            # Extract only real (non-padded) portions
+            mas1_straight_real = mas1_straight[i][:mas1_straight_len]
+            mas1_flipped_real = mas1_flipped[i][:mas1_flipped_len]
+            mas2_straight_real = mas2_straight[i][:mas2_straight_len]
+            mas2_flipped_real = mas2_flipped[i][:mas2_flipped_len]
+            
+            # Project through reducers
+            mas1_straight_proj = self.reducer(mas1_straight_real)
+            mas1_flipped_proj = self.reducer(mas1_flipped_real)
+            mas2_straight_proj = self.reducer(mas2_straight_real)
+            mas2_flipped_proj = self.reducer(mas2_flipped_real)
+            
+            # Add indicator tokens (straight/flipped + protein identity)
+            straight_indicator_mas1 = torch.ones((mas1_straight_len, 1), device=mas1_straight.device)
+            flipped_indicator_mas1 = torch.zeros((mas1_flipped_len, 1), device=mas1_flipped.device)
+            straight_indicator_mas2 = torch.ones((mas2_straight_len, 1), device=mas2_straight.device)
+            flipped_indicator_mas2 = torch.zeros((mas2_flipped_len, 1), device=mas2_flipped.device)
+            
+            first_indicator_mas1_s = torch.ones((mas1_straight_len, 1), device=mas1_straight.device)
+            first_indicator_mas1_f = torch.ones((mas1_flipped_len, 1), device=mas1_flipped.device)
+            second_indicator_mas2_s = torch.zeros((mas2_straight_len, 1), device=mas2_straight.device)
+            second_indicator_mas2_f = torch.zeros((mas2_flipped_len, 1), device=mas2_flipped.device)
 
         # Concatenate descriptors with indicators
-        mas1_straight = torch.cat([mas1_straight, straight_indicator_mas1, first_indicator], dim=-1)
-        mas1_flipped = torch.cat([mas1_flipped, flipped_indicator_mas1, first_indicator], dim=-1)
-        mas2_straight = torch.cat([mas2_straight, straight_indicator_mas2, second_indicator], dim=-1)
-        mas2_flipped = torch.cat([mas2_flipped, flipped_indicator_mas2, second_indicator], dim=-1)
+            mas1_straight_with_ind = torch.cat([mas1_straight_proj, straight_indicator_mas1, first_indicator_mas1_s], dim=-1)
+            mas1_flipped_with_ind = torch.cat([mas1_flipped_proj, flipped_indicator_mas1, first_indicator_mas1_f], dim=-1)
+            mas2_straight_with_ind = torch.cat([mas2_straight_proj, straight_indicator_mas2, second_indicator_mas2_s], dim=-1)
+            mas2_flipped_with_ind = torch.cat([mas2_flipped_proj, flipped_indicator_mas2, second_indicator_mas2_f], dim=-1)
+            
+            # Combine all sequences for mutual attention
+            mas_combined = torch.cat([mas1_straight_with_ind, mas1_flipped_with_ind, 
+                                    mas2_straight_with_ind, mas2_flipped_with_ind], dim=0)
+            
+            mas_sequences.append(mas_combined)
         
-        # Process through transformers
-        # Combine straight and flipped for each protein
-        mas = torch.cat([mas1_straight, mas1_flipped, mas2_straight, mas2_flipped], dim=1)
+        # Pad sequences to same length for transformer processing
+        max_len = max(seq.size(0) for seq in mas_sequences)
         
-        # Transform sequences (B, L, D) -> (L, B, D) for transformer
-        mas = mas.transpose(0, 1)
-
-        # Apply transformers
-        mas_out = self.transformer(mas)
+        mas_padded = []
+        mas_masks = []
         
-        # Get mean of transformer outputs for global representation
-        mas_out = mas_out.mean(dim=0)
+        for mas_seq in mas_sequences:
+            mas_len = mas_seq.size(0)
+            if mas_len < max_len:
+                padding = torch.zeros(max_len - mas_len, mas_seq.size(1), device=mas_seq.device)
+                mas_padded.append(torch.cat([mas_seq, padding], dim=0))
+                mask = torch.cat([torch.ones(mas_len, device=mas_seq.device), torch.zeros(max_len - mas_len, device=mas_seq.device)]).bool()
+            else:
+                mas_padded.append(mas_seq)
+                mask = torch.ones(mas_len, device=mas_seq.device).bool()
+            mas_masks.append(mask)
+        
+        # Stack and transpose for transformer
+        mas_batch = torch.stack(mas_padded, dim=0).transpose(0, 1)  # (L, B, D)
+        mas_mask = torch.stack(mas_masks, dim=0)  # (B, L)
+        
+        # Apply transformer with proper masking
+        mas_out = self.transformer(mas_batch, src_key_padding_mask=~mas_mask)
+        
+        # Global representation: mean only over non-padded positions
+        mas_out = mas_out.transpose(0, 1)  # (B, L, D)
+        
+        # Masked mean pooling
+        mas_out_masked = mas_out * mas_mask.unsqueeze(-1).float()
+        mas_out = mas_out_masked.sum(dim=1) / mas_mask.sum(dim=1, keepdim=True).float()
 
         # Concatenate all features
         combined = torch.cat([x, xt, mas_out], dim=1)
@@ -337,9 +460,6 @@ class GCNN_geom_transformer(nn.Module):
         self.desc_proj_mas2_straight = nn.Linear(descriptor_dim, transformer_dim)  # For straight descriptors of second protein
         self.desc_proj_mas2_flipped = nn.Linear(descriptor_dim, transformer_dim)   # For flipped descriptors of second protein
         
-        # CLS token
-        self.cls_token = nn.Parameter(torch.randn(1, 1, transformer_dim))
-        
         # Transformer encoder
         self.transformer = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
@@ -356,11 +476,10 @@ class GCNN_geom_transformer(nn.Module):
         self.relu = nn.LeakyReLU()
         self.dropout = nn.Dropout(dropout)
         
-        # Final prediction layer using CLS token
+        # Final prediction layer using mean pooled representation
         self.final_fc = nn.Linear(transformer_dim, n_output)
 
-    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped, 
-                mas1_straight_lengths=None, mas1_flipped_lengths=None, mas2_straight_lengths=None, mas2_flipped_lengths=None):
+    def forward(self, pro1_data, pro2_data, mas1_straight, mas1_flipped, mas2_straight, mas2_flipped, mas1_straight_lengths, mas1_flipped_lengths, mas2_straight_lengths, mas2_flipped_lengths):
         # Process protein 1 with GNN - same logic as other models
         pro1_x, pro1_edge_index, pro1_batch = pro1_data.x, pro1_data.edge_index, pro1_data.batch
         pro1_nodes = self.pro1_conv1(pro1_x, pro1_edge_index)
@@ -404,24 +523,16 @@ class GCNN_geom_transformer(nn.Module):
             pro1_sample_nodes = pro1_nodes[pro1_mask]  # Shape: (num_nodes_pro1, transformer_dim)
             pro2_sample_nodes = pro2_nodes[pro2_mask]  # Shape: (num_nodes_pro2, transformer_dim)
             
-            # Get descriptors for current sample - handle both padded and unpadded cases
-            if mas1_straight_lengths is not None:
-                # Unpadded mode: use only the real (non-padded) portions
-                mas1_straight_len = mas1_straight_lengths[i].item()
-                mas1_flipped_len = mas1_flipped_lengths[i].item()
-                mas2_straight_len = mas2_straight_lengths[i].item()
-                mas2_flipped_len = mas2_flipped_lengths[i].item()
-                
-                mas1_straight_sample = mas1_straight_proj[i][:mas1_straight_len]  # Shape: (real_len, transformer_dim)
-                mas1_flipped_sample = mas1_flipped_proj[i][:mas1_flipped_len]     # Shape: (real_len, transformer_dim)
-                mas2_straight_sample = mas2_straight_proj[i][:mas2_straight_len]  # Shape: (real_len, transformer_dim)
-                mas2_flipped_sample = mas2_flipped_proj[i][:mas2_flipped_len]     # Shape: (real_len, transformer_dim)
-            else:
-                # Padded mode: use entire sequences (original behavior)
-                mas1_straight_sample = mas1_straight_proj[i]  # Shape: (seq_len, transformer_dim)
-                mas1_flipped_sample = mas1_flipped_proj[i]    # Shape: (seq_len, transformer_dim)
-                mas2_straight_sample = mas2_straight_proj[i]  # Shape: (seq_len, transformer_dim)
-                mas2_flipped_sample = mas2_flipped_proj[i]    # Shape: (seq_len, transformer_dim)
+            # Get descriptors for current sample - use only the real (non-padded) portions
+            mas1_straight_len = mas1_straight_lengths[i].item()
+            mas1_flipped_len = mas1_flipped_lengths[i].item()
+            mas2_straight_len = mas2_straight_lengths[i].item()
+            mas2_flipped_len = mas2_flipped_lengths[i].item()
+            
+            mas1_straight_sample = mas1_straight_proj[i][:mas1_straight_len]  # Shape: (real_len, transformer_dim)
+            mas1_flipped_sample = mas1_flipped_proj[i][:mas1_flipped_len]     # Shape: (real_len, transformer_dim)
+            mas2_straight_sample = mas2_straight_proj[i][:mas2_straight_len]  # Shape: (real_len, transformer_dim)
+            mas2_flipped_sample = mas2_flipped_proj[i][:mas2_flipped_len]     # Shape: (real_len, transformer_dim)
             
             # Combine all elements for this sample: nodes first, then descriptors
             sequence = torch.cat([
@@ -465,14 +576,6 @@ class GCNN_geom_transformer(nn.Module):
         sequence_batch = torch.stack(padded_sequences, dim=0)  # Shape: (batch_size, max_len, transformer_dim)
         attention_mask = torch.stack(padded_masks, dim=0)      # Shape: (batch_size, max_len)
         
-        # Add CLS token to the beginning of each sequence
-        cls_tokens = self.cls_token.expand(batch_size, -1, -1)  # Shape: (batch_size, 1, transformer_dim)
-        sequence_batch = torch.cat([cls_tokens, sequence_batch], dim=1)  # Shape: (batch_size, max_len+1, transformer_dim)
-        
-        # Update attention mask for CLS token
-        cls_mask = torch.ones(batch_size, 1, device=attention_mask.device)
-        attention_mask = torch.cat([cls_mask, attention_mask], dim=1)  # Shape: (batch_size, max_len+1)
-        
         # Create padding mask for transformer (True for padding positions)
         src_key_padding_mask = (attention_mask == 0)
         
@@ -480,13 +583,15 @@ class GCNN_geom_transformer(nn.Module):
         transformer_output = self.transformer(
             sequence_batch,
             src_key_padding_mask=src_key_padding_mask
-        )  # Shape: (batch_size, max_len+1, transformer_dim)
+        )  # Shape: (batch_size, max_len, transformer_dim)
         
-        # Extract CLS token representation (first token)
-        cls_output = transformer_output[:, 0, :]  # Shape: (batch_size, transformer_dim)
+        # Mean pooling over non-padded positions
+        transformer_output_masked = transformer_output * attention_mask.unsqueeze(-1).float()
+        pooled_output = transformer_output_masked.sum(dim=1) / attention_mask.sum(dim=1, keepdim=True).float()  # Shape: (batch_size, transformer_dim)
         
-        # Final prediction using CLS token
-        out = self.final_fc(cls_output)
+        # Final prediction using mean pooled representation
+        out = self.final_fc(pooled_output)
+        # print(out)
         return out
 
 
