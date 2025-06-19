@@ -1,0 +1,58 @@
+GCNN Loaded
+GCNN(
+  (pro1_conv1): GCNConv(1024, 1024)
+  (pro1_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (pro2_conv1): GCNConv(1024, 1024)
+  (pro2_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (dropout): Dropout(p=0.2, inplace=False)
+  (final_fc): Linear(in_features=256, out_features=1, bias=True)
+)
+AttGNN Loaded
+AttGNN(
+  (pro1_conv1): GATConv(1024, 128, heads=1)
+  (pro1_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (pro2_conv1): GATConv(1024, 128, heads=1)
+  (pro2_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (sigmoid): Sigmoid()
+  (dropout): Dropout(p=0.2, inplace=False)
+  (fc1): Linear(in_features=256, out_features=256, bias=True)
+  (fc2): Linear(in_features=256, out_features=64, bias=True)
+  (out): Linear(in_features=64, out_features=1, bias=True)
+)
+Datalength
+13911
+7680
+GCNN Loaded
+Warning: Checkpoint ../masif_features/GCN_baseline.pth not found, starting from scratch
+Running configuration: baseline
+Model: GCNN
+Save path: ../masif_features/GCN_baseline_new.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.002154782544027201 - train_accuracy : 84.27143986773056
+Epoch [1/50] [==============================] - val_loss : 0.11920370161533356 - val_accuracy : 84.11458333333334
+Model saved to ../masif_features/GCN_baseline_new.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.0015856739200222707 - train_accuracy : 88.85054992452017
+Epoch [2/50] [==============================] - val_loss : 0.09095665067434311 - val_accuracy : 87.44791666666667
+Model saved to ../masif_features/GCN_baseline_new.pth
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0012136701954962442 - train_accuracy : 91.66846380562144
+Epoch [3/50] [==============================] - val_loss : 0.11165689677000046 - val_accuracy : 84.44010416666666
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : 0.0009185008113475528 - train_accuracy : 93.6596937675221
+Epoch [4/50] [==============================] - val_loss : 0.0750395879149437 - val_accuracy : 89.66145833333333
+Model saved to ../masif_features/GCN_baseline_new.pth
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : 0.0007345654233122512 - train_accuracy : 95.10459348716843
+Epoch [5/50] [==============================] - val_loss : 0.09312165528535843 - val_accuracy : 87.5
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : 0.0006248289406000528 - train_accuracy : 95.74437495507152
+Epoch [6/50] [==============================] - val_loss : 0.08819954842329025 - val_accuracy : 88.515625
+Training on 13911 samples.....
+Epoch [7/50] [==============================] - train_loss : 0.0005637484584826052 - train_accuracy : 96.2403853065919
+Epoch [7/50] [==============================] - val_loss : 0.08370476216077805 - val_accuracy : 89.03645833333333
+Early stopping!
+min_val_loss : 0.0750395879149437 for epoch 3 ............... best_val_accuracy : 89.66145833333333 for epoch 3
+Model saved to ../masif_features/GCN_baseline_new.pth

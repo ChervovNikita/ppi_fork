@@ -1,0 +1,58 @@
+GCNN Loaded
+GCNN(
+  (pro1_conv1): GCNConv(1024, 1024)
+  (pro1_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (pro2_conv1): GCNConv(1024, 1024)
+  (pro2_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (dropout): Dropout(p=0.2, inplace=False)
+  (final_fc): Linear(in_features=256, out_features=1, bias=True)
+)
+AttGNN Loaded
+AttGNN(
+  (pro1_conv1): GATConv(1024, 128, heads=1)
+  (pro1_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (pro2_conv1): GATConv(1024, 128, heads=1)
+  (pro2_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (sigmoid): Sigmoid()
+  (dropout): Dropout(p=0.2, inplace=False)
+  (fc1): Linear(in_features=256, out_features=256, bias=True)
+  (fc2): Linear(in_features=256, out_features=64, bias=True)
+  (out): Linear(in_features=64, out_features=1, bias=True)
+)
+Datalength
+13911
+7680
+GCNN Loaded
+Warning: Checkpoint ../masif_features/GCN_01.pth not found, starting from scratch
+Running configuration: mutual_01
+Model: GCNN_mutual_attention
+Save path: ../masif_features/GCN_mutual_01_new.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.0020797483181542475 - train_accuracy : 84.49428509812378
+Epoch [1/50] [==============================] - val_loss : 0.09961254894733429 - val_accuracy : 86.5234375
+Model saved to ../masif_features/GCN_mutual_01_new.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.00160899367694355 - train_accuracy : 88.50549924520163
+Epoch [2/50] [==============================] - val_loss : 0.09557369351387024 - val_accuracy : 86.54947916666667
+Model saved to ../masif_features/GCN_mutual_01_new.pth
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0014193368992923506 - train_accuracy : 90.04385019049673
+Epoch [3/50] [==============================] - val_loss : 0.09714774042367935 - val_accuracy : 86.04166666666667
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : 0.0013111231250219 - train_accuracy : 90.84177988642081
+Epoch [4/50] [==============================] - val_loss : 0.08659788221120834 - val_accuracy : 88.046875
+Model saved to ../masif_features/GCN_mutual_01_new.pth
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : 0.001251412427376758 - train_accuracy : 91.51750413341959
+Epoch [5/50] [==============================] - val_loss : 0.08770006150007248 - val_accuracy : 87.95572916666666
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : 0.0012209109632440763 - train_accuracy : 91.84817770109986
+Epoch [6/50] [==============================] - val_loss : 0.09538207203149796 - val_accuracy : 86.74479166666667
+Training on 13911 samples.....
+Epoch [7/50] [==============================] - train_loss : 0.0012094064470608231 - train_accuracy : 91.8769319243764
+Epoch [7/50] [==============================] - val_loss : 0.0923507958650589 - val_accuracy : 87.33072916666667
+Early stopping!
+min_val_loss : 0.08659788221120834 for epoch 3 ............... best_val_accuracy : 88.046875 for epoch 3
+Model saved to ../masif_features/GCN_mutual_01_new.pth

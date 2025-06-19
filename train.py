@@ -17,8 +17,10 @@ import argparse
 parser = argparse.ArgumentParser(description='Train PPI models with different configurations')
 parser.add_argument('--run', type=str, required=True, 
                    choices=['mutual_01', 'baseline', 'pool', 'mutual_02', 'mutual_03', 
-                           'desc_01', 'desc_02', 'desc_03', 'geom_01', 'geom_02', 'geom_03'],
+                           'desc_01', 'desc_02', 'desc_03', 'geom_01', 'geom_02', 'geom_03', 'desc_only', 'graph_only',
+                           'att_baseline', 'att_pool'],
                    help='Run name to select model configuration')
+parser.add_argument('--layers', type=int, default=1, help='Number of layers (default: 1)')
 args = parser.parse_args()
 
 # Set seeds for reproducibility
@@ -39,7 +41,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
 from data_prepare import trainloader, testloader
-from models import GCNN, AttGNN, GCNN_mutual_attention, GCNN_with_descriptors, GCNN_desc_pool, GCNN_geom_transformer
+from models import GCNN, AttGNN, GCNN_mutual_attention, GCNN_with_descriptors, GCNN_desc_pool, GCNN_geom_transformer, GCNN_desciptors_only, GCNN_graph_only, AttGNN_baseline, AttGNN_desc_pool
 from torch_geometric.data import DataLoader as DataLoader_n
 
 print("Datalength")
@@ -50,69 +52,93 @@ print(len(testloader))
 # Model configuration based on run name
 def get_model_config(run_name):
     if run_name == 'mutual_01':
-        model = GCNN_mutual_attention(num_layers=1, dropout=0.1)
-        checkpoint_path = "../masif_features/GCN_01.pth"
-        save_path = "../masif_features/GCN_mutual_01_new.pth"
+        model = GCNN_mutual_attention(num_layers=args.layers, dropout=0.1)
+        checkpoint_path = f"../masif_features/GCN_01_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_mutual_01_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'baseline':
         model = GCNN()
-        checkpoint_path = "../masif_features/GCN_baseline.pth"
-        save_path = "../masif_features/GCN_baseline_new.pth"
+        checkpoint_path = f"../masif_features/GCN_baseline_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_baseline_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'pool':
         model = GCNN_desc_pool()
-        checkpoint_path = "../masif_features/GCN_pool.pth"
-        save_path = "../masif_features/GCN_pool_new.pth"
+        checkpoint_path = f"../masif_features/GCN_pool_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_pool_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'mutual_02':
-        model = GCNN_mutual_attention(num_layers=1, dropout=0.2)
-        checkpoint_path = "../masif_features/GCN_02.pth"
-        save_path = "../masif_features/GCN_mutual_02_new.pth"
+        model = GCNN_mutual_attention(num_layers=args.layers, dropout=0.2)
+        checkpoint_path = f"../masif_features/GCN_02_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_mutual_02_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'mutual_03':
-        model = GCNN_mutual_attention(num_layers=1, dropout=0.3)
-        checkpoint_path = "../masif_features/GCN.pth"
-        save_path = "../masif_features/GCN_mutual_03_new.pth"
+        model = GCNN_mutual_attention(num_layers=args.layers, dropout=0.3)
+        checkpoint_path = f"../masif_features/GCN_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_mutual_03_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'desc_01':
-        model = GCNN_with_descriptors(num_layers=1, dropout=0.1, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=31, nhead=4, dim_feedforward=128)
-        checkpoint_path = "../masif_features/GCN_01_double_transforer.pth"
-        save_path = "../masif_features/GCN_desc_01_new.pth"
+        model = GCNN_with_descriptors(num_layers=args.layers, dropout=0.1, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=31, nhead=4, dim_feedforward=128)
+        checkpoint_path = f"../masif_features/GCN_01_double_transforer_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_desc_01_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'desc_02':
-        model = GCNN_with_descriptors(num_layers=1, dropout=0.2, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=31, nhead=4, dim_feedforward=128)
-        checkpoint_path = "../masif_features/GCN_02_double_transforer.pth"
-        save_path = "../masif_features/GCN_desc_02_new.pth"
+        model = GCNN_with_descriptors(num_layers=args.layers, dropout=0.2, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=31, nhead=4, dim_feedforward=128)
+        checkpoint_path = f"../masif_features/GCN_02_double_transforer_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_desc_02_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'desc_03':
-        model = GCNN_with_descriptors(num_layers=1, dropout=0.3, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=31, nhead=4, dim_feedforward=128)
-        checkpoint_path = "../masif_features/GCN_03_double_transforer.pth"
-        save_path = "../masif_features/GCN_desc_03_new.pth"
+        model = GCNN_with_descriptors(num_layers=args.layers, dropout=0.3, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=31, nhead=4, dim_feedforward=128)
+        checkpoint_path = f"../masif_features/GCN_03_double_transforer_l{args.layers}.pth"
+        save_path = f"../masif_features/GCN_desc_03_new_l{args.layers}.pth"
         load_checkpoint = True
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.001)
     elif run_name == 'geom_01':
-        model = GCNN_geom_transformer(num_layers=2, dropout=0.1, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=128, nhead=8, dim_feedforward=256)
+        model = GCNN_geom_transformer(num_layers=args.layers, dropout=0.1, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=128, nhead=8, dim_feedforward=256)
         checkpoint_path = None
-        save_path = "../masif_features/GCN_geom_01.pth"
+        save_path = f"../masif_features/GCN_geom_01_l{args.layers}.pth"
         load_checkpoint = False
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)
     elif run_name == 'geom_02':
-        model = GCNN_geom_transformer(num_layers=2, dropout=0.2, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=128, nhead=8, dim_feedforward=256)
+        model = GCNN_geom_transformer(num_layers=args.layers, dropout=0.2, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=128, nhead=8, dim_feedforward=256)
         checkpoint_path = None
-        save_path = "../masif_features/GCN_geom_02.pth"
+        save_path = f"../masif_features/GCN_geom_02_l{args.layers}.pth"
         load_checkpoint = False
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)
     elif run_name == 'geom_03':
-        model = GCNN_geom_transformer(num_layers=2, dropout=0.3, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=128, nhead=8, dim_feedforward=256)
+        model = GCNN_geom_transformer(num_layers=args.layers, dropout=0.3, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=128, nhead=8, dim_feedforward=256)
         checkpoint_path = None
-        save_path = "../masif_features/GCN_geom_03.pth"
+        save_path = f"../masif_features/GCN_geom_03_l{args.layers}.pth"
+        load_checkpoint = False
+        # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)
+    elif run_name == 'desc_only':
+        model = GCNN_desciptors_only(num_layers=args.layers, dropout=0.2, num_features_pro=1024, output_dim=128, descriptor_dim=80, transformer_dim=128, nhead=8, dim_feedforward=256)
+        checkpoint_path = None
+        save_path = f"../masif_features/GCN_desc_only_l{args.layers}.pth"
+        load_checkpoint = False
+        # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)
+    elif run_name == 'graph_only':
+        model = GCNN_graph_only(num_layers=args.layers, dropout=0.2, num_features_pro=1024, output_dim=128, transformer_dim=128, nhead=8, dim_feedforward=256)
+        checkpoint_path = None
+        save_path = f"../masif_features/GCN_graph_only_l{args.layers}.pth"
+        load_checkpoint = False
+        # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)
+    elif run_name == 'att_baseline':
+        model = AttGNN_baseline(dropout=0.1, heads=1)
+        checkpoint_path = None
+        save_path = f"../masif_features/AttGNN_baseline_l{args.layers}.pth"
+        load_checkpoint = False
+        # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)
+    elif run_name == 'att_pool':
+        model = AttGNN_desc_pool(dropout=0.1, heads=1)
+        checkpoint_path = None
+        save_path = f"../masif_features/AttGNN_desc_pool_l{args.layers}.pth"
         load_checkpoint = False
         # optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)
     optimizer =  torch.optim.Adam(model.parameters(), lr= 0.0001)

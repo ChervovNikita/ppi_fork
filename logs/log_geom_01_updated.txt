@@ -1,0 +1,62 @@
+GCNN Loaded
+GCNN(
+  (pro1_conv1): GCNConv(1024, 1024)
+  (pro1_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (pro2_conv1): GCNConv(1024, 1024)
+  (pro2_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (dropout): Dropout(p=0.2, inplace=False)
+  (final_fc): Linear(in_features=256, out_features=1, bias=True)
+)
+AttGNN Loaded
+AttGNN(
+  (pro1_conv1): GATConv(1024, 128, heads=1)
+  (pro1_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (pro2_conv1): GATConv(1024, 128, heads=1)
+  (pro2_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (sigmoid): Sigmoid()
+  (dropout): Dropout(p=0.2, inplace=False)
+  (fc1): Linear(in_features=256, out_features=256, bias=True)
+  (fc2): Linear(in_features=256, out_features=64, bias=True)
+  (out): Linear(in_features=64, out_features=1, bias=True)
+)
+Datalength
+13911
+7680
+GCNN_geom_transformer Loaded
+Running configuration: geom_01
+Model: GCNN_geom_transformer
+Save path: ../masif_features/GCN_geom_01.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.0018706038227491613 - train_accuracy : 85.22032923585652
+Epoch [1/50] [==============================] - val_loss : 0.07289860397577286 - val_accuracy : 89.609375
+Model saved to ../masif_features/GCN_geom_01.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.0011271350274022602 - train_accuracy : 92.1572856013227
+Epoch [2/50] [==============================] - val_loss : 0.05170489102602005 - val_accuracy : 93.38541666666667
+Model saved to ../masif_features/GCN_geom_01.pth
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0008500540023974218 - train_accuracy : 94.58701746819064
+Epoch [3/50] [==============================] - val_loss : 0.03871042653918266 - val_accuracy : 94.47916666666667
+Model saved to ../masif_features/GCN_geom_01.pth
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : 0.0006430079787083579 - train_accuracy : 96.08223707857093
+Epoch [4/50] [==============================] - val_loss : 0.03877856209874153 - val_accuracy : 95.22135416666667
+Model saved to ../masif_features/GCN_geom_01.pth
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : 0.0005240177901400372 - train_accuracy : 96.99518366760118
+Epoch [5/50] [==============================] - val_loss : 0.036124665290117264 - val_accuracy : 95.65104166666667
+Model saved to ../masif_features/GCN_geom_01.pth
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : 0.0004500970417131399 - train_accuracy : 97.53432535403638
+Epoch [6/50] [==============================] - val_loss : 0.03945058211684227 - val_accuracy : 95.3515625
+Training on 13911 samples.....
+Epoch [7/50] [==============================] - train_loss : 0.00041097928310268876 - train_accuracy : 97.81467903098267
+Epoch [7/50] [==============================] - val_loss : 0.03746632859110832 - val_accuracy : 95.625
+Training on 13911 samples.....
+Epoch [8/50] [==============================] - train_loss : 0.00039521943340379813 - train_accuracy : 97.98720437064193
+Epoch [8/50] [==============================] - val_loss : 0.03833109140396118 - val_accuracy : 95.49479166666667
+Early stopping!
+min_val_loss : 0.036124665290117264 for epoch 4 ............... best_val_accuracy : 95.65104166666667 for epoch 4
+Model saved to ../masif_features/GCN_geom_01.pth

@@ -1,0 +1,76 @@
+GCNN Loaded
+GCNN(
+  (pro1_conv1): GCNConv(1024, 1024)
+  (pro1_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (pro2_conv1): GCNConv(1024, 1024)
+  (pro2_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (dropout): Dropout(p=0.2, inplace=False)
+  (final_fc): Linear(in_features=256, out_features=1, bias=True)
+)
+AttGNN Loaded
+AttGNN(
+  (pro1_conv1): GATConv(1024, 128, heads=1)
+  (pro1_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (pro2_conv1): GATConv(1024, 128, heads=1)
+  (pro2_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (sigmoid): Sigmoid()
+  (dropout): Dropout(p=0.2, inplace=False)
+  (fc1): Linear(in_features=256, out_features=256, bias=True)
+  (fc2): Linear(in_features=256, out_features=64, bias=True)
+  (out): Linear(in_features=64, out_features=1, bias=True)
+)
+Datalength
+13911
+7680
+GCNN_geom_transformer Loaded
+Running configuration: geom_03
+Model: GCNN_geom_transformer
+Save path: ../masif_features/GCN_geom_03.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.0018424385268498756 - train_accuracy : 85.6588311408238
+Epoch [1/50] [==============================] - val_loss : 0.06559482216835022 - val_accuracy : 90.390625
+Model saved to ../masif_features/GCN_geom_03.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.0013031395135692564 - train_accuracy : 90.49672920710229
+Epoch [2/50] [==============================] - val_loss : 0.06752312928438187 - val_accuracy : 90.37760416666667
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0012092984466688078 - train_accuracy : 91.20839623319675
+Epoch [3/50] [==============================] - val_loss : 0.06937090307474136 - val_accuracy : 90.83333333333333
+Model saved to ../masif_features/GCN_geom_03.pth
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : 0.0011370186545422046 - train_accuracy : 91.92725181511034
+Epoch [4/50] [==============================] - val_loss : 0.08056630194187164 - val_accuracy : 89.38802083333334
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : 0.0010906770515282862 - train_accuracy : 92.40888505499245
+Epoch [5/50] [==============================] - val_loss : 0.07806825637817383 - val_accuracy : 89.38802083333334
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : 0.0010467831469729708 - train_accuracy : 92.76831284594925
+Epoch [6/50] [==============================] - val_loss : 0.08422759175300598 - val_accuracy : 89.15364583333333
+Training on 13911 samples.....
+Epoch [7/50] [==============================] - train_loss : 0.0010420871316315554 - train_accuracy : 92.73237006685356
+Epoch [7/50] [==============================] - val_loss : 0.08266054093837738 - val_accuracy : 89.07552083333333
+Training on 13911 samples.....
+Epoch [8/50] [==============================] - train_loss : 0.0010281925184333197 - train_accuracy : 92.99115807634246
+Epoch [8/50] [==============================] - val_loss : 0.07587718963623047 - val_accuracy : 89.93489583333333
+Training on 13911 samples.....
+Epoch [9/50] [==============================] - train_loss : 0.0010262997255811599 - train_accuracy : 92.69642728775788
+Epoch [9/50] [==============================] - val_loss : 0.07751329988241196 - val_accuracy : 89.47916666666667
+Training on 13911 samples.....
+Epoch [10/50] [==============================] - train_loss : 0.001014292410184838 - train_accuracy : 93.04147796707642
+Epoch [10/50] [==============================] - val_loss : 0.07669913023710251 - val_accuracy : 89.609375
+Training on 13911 samples.....
+Epoch [11/50] [==============================] - train_loss : 0.0010127286459285585 - train_accuracy : 93.05585507871469
+Epoch [11/50] [==============================] - val_loss : 0.07784619182348251 - val_accuracy : 89.55729166666667
+Training on 13911 samples.....
+Epoch [12/50] [==============================] - train_loss : 0.0010095354076695652 - train_accuracy : 93.00553518798074
+Epoch [12/50] [==============================] - val_loss : 0.07711698114871979 - val_accuracy : 89.58333333333334
+Training on 13911 samples.....
+Epoch [13/50] [==============================] - train_loss : 0.0010214657998848995 - train_accuracy : 93.05585507871469
+Epoch [13/50] [==============================] - val_loss : 0.07697363197803497 - val_accuracy : 89.58333333333334
+Training on 13911 samples.....
+Epoch [14/50] [==============================] - train_loss : 0.0010197047821772312 - train_accuracy : 92.86895262741716
+Epoch [14/50] [==============================] - val_loss : 0.0768718495965004 - val_accuracy : 89.59635416666667
+Training on 13911 samples.....
+Epoch [15/50] [==============================] - train_loss : 0.0010169569968269286 - train_accuracy : 92.98396952052332

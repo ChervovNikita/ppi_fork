@@ -1,0 +1,12 @@
+Datalength
+13911
+7680
+GCNN_graph_only Loaded
+Running configuration: geom_01
+Model: GCNN_geom_transformer
+Save path: ../masif_features/GCN_geom_01_l3.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.001907376546320301 - train_accuracy : 84.60930199122996
+Epoch [1/50] [==============================] - val_loss : 0.09771062433719635 - val_accuracy : 86.25
+Model saved to ../masif_features/GCN_geom_01_l3.pth
+Training on 13911 samples.....

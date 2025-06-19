@@ -1,0 +1,36 @@
+Datalength
+13911
+7680
+GCNN_graph_only Loaded
+Running configuration: geom_01
+Model: GCNN_geom_transformer
+Save path: ../masif_features/GCN_geom_01_l1.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : nan - train_accuracy : 69.7936884479908
+Epoch [1/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Model saved to ../masif_features/GCN_geom_01_l1.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [2/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [3/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [4/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [5/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [6/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....
+Epoch [7/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [7/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....
+Epoch [8/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [8/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....
+Epoch [9/50] [==============================] - train_loss : nan - train_accuracy : 48.328660772050895
+Epoch [9/50] [==============================] - val_loss : nan - val_accuracy : 47.630208333333336
+Training on 13911 samples.....

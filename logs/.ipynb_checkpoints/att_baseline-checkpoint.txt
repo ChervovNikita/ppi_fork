@@ -1,0 +1,8 @@
+Datalength
+13911
+7680
+AttGNN_baseline Loaded
+Running configuration: att_baseline
+Model: AttGNN_baseline
+Save path: ../masif_features/AttGNN_baseline_l1.pth
+Training on 13911 samples.....

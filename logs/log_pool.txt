@@ -1,0 +1,62 @@
+GCNN Loaded
+GCNN(
+  (pro1_conv1): GCNConv(1024, 1024)
+  (pro1_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (pro2_conv1): GCNConv(1024, 1024)
+  (pro2_fc1): Linear(in_features=1024, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (dropout): Dropout(p=0.2, inplace=False)
+  (final_fc): Linear(in_features=256, out_features=1, bias=True)
+)
+AttGNN Loaded
+AttGNN(
+  (pro1_conv1): GATConv(1024, 128, heads=1)
+  (pro1_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (pro2_conv1): GATConv(1024, 128, heads=1)
+  (pro2_fc1): Linear(in_features=128, out_features=128, bias=True)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (sigmoid): Sigmoid()
+  (dropout): Dropout(p=0.2, inplace=False)
+  (fc1): Linear(in_features=256, out_features=256, bias=True)
+  (fc2): Linear(in_features=256, out_features=64, bias=True)
+  (out): Linear(in_features=64, out_features=1, bias=True)
+)
+Datalength
+13911
+7680
+GCNN Loaded
+Warning: Checkpoint ../masif_features/GCN_pool.pth not found, starting from scratch
+Running configuration: pool
+Model: GCNN_desc_pool
+Save path: ../masif_features/GCN_pool_new.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.00212903036415624 - train_accuracy : 83.81137229530587
+Epoch [1/50] [==============================] - val_loss : 0.1109941154718399 - val_accuracy : 84.47916666666667
+Model saved to ../masif_features/GCN_pool_new.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.0016413928816410724 - train_accuracy : 88.30421968226582
+Epoch [2/50] [==============================] - val_loss : 0.09672199934720993 - val_accuracy : 86.15885416666667
+Model saved to ../masif_features/GCN_pool_new.pth
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0014538141131542539 - train_accuracy : 89.84975918338006
+Epoch [3/50] [==============================] - val_loss : 0.09498882293701172 - val_accuracy : 86.80989583333333
+Model saved to ../masif_features/GCN_pool_new.pth
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : 0.0013559179011375638 - train_accuracy : 90.56142620947452
+Epoch [4/50] [==============================] - val_loss : 0.09918250888586044 - val_accuracy : 86.19791666666666
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : 0.001293859642481928 - train_accuracy : 91.14369923082452
+Epoch [5/50] [==============================] - val_loss : 0.08821476995944977 - val_accuracy : 87.95572916666666
+Model saved to ../masif_features/GCN_pool_new.pth
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : 0.0012652527367550761 - train_accuracy : 91.40248724031342
+Epoch [6/50] [==============================] - val_loss : 0.093553826212883 - val_accuracy : 87.17447916666666
+Training on 13911 samples.....
+Epoch [7/50] [==============================] - train_loss : 0.0012462212910289694 - train_accuracy : 91.61095535906836
+Epoch [7/50] [==============================] - val_loss : 0.09131573140621185 - val_accuracy : 87.578125
+Training on 13911 samples.....
+Epoch [8/50] [==============================] - train_loss : 0.0012483547263987221 - train_accuracy : 91.56063546833441
+Epoch [8/50] [==============================] - val_loss : 0.09184001386165619 - val_accuracy : 87.43489583333334
+Early stopping!
+min_val_loss : 0.08821476995944977 for epoch 4 ............... best_val_accuracy : 87.95572916666666 for epoch 4
+Model saved to ../masif_features/GCN_pool_new.pth

@@ -1,0 +1,20 @@
+Datalength
+13911
+7680
+GCNN_graph_only Loaded
+Running configuration: geom_01
+Model: GCNN_geom_transformer
+Save path: ../masif_features/GCN_geom_01_l3.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.001907376546320301 - train_accuracy : 84.60930199122996
+Epoch [1/50] [==============================] - val_loss : 0.09771062433719635 - val_accuracy : 86.25
+Model saved to ../masif_features/GCN_geom_01_l3.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.0013033890704507024 - train_accuracy : 90.17324419524118
+Epoch [2/50] [==============================] - val_loss : 0.06378508359193802 - val_accuracy : 91.015625
+Model saved to ../masif_features/GCN_geom_01_l3.pth
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0009490158149226052 - train_accuracy : 93.24994608583135
+Epoch [3/50] [==============================] - val_loss : 0.04291519895195961 - val_accuracy : 94.84375
+Model saved to ../masif_features/GCN_geom_01_l3.pth
+Training on 13911 samples.....

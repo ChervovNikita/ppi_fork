@@ -1,0 +1,44 @@
+Datalength
+13911
+7680
+GCNN_graph_only Loaded
+Running configuration: graph_only
+Model: GCNN_graph_only
+Save path: ../masif_features/GCN_graph_only.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.0014509792495085595 - train_accuracy : 88.81460714542449
+Epoch [1/50] [==============================] - val_loss : 0.058447618037462234 - val_accuracy : 92.12239583333334
+Model saved to ../masif_features/GCN_graph_only.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.0008518631800704764 - train_accuracy : 94.22758967723385
+Epoch [2/50] [==============================] - val_loss : 0.036023981869220734 - val_accuracy : 95.1953125
+Model saved to ../masif_features/GCN_graph_only.pth
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0005983070499374548 - train_accuracy : 96.2403853065919
+Epoch [3/50] [==============================] - val_loss : 0.03171688690781593 - val_accuracy : 96.06770833333333
+Model saved to ../masif_features/GCN_graph_only.pth
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : 0.0004407532737816571 - train_accuracy : 97.33304579110057
+Epoch [4/50] [==============================] - val_loss : 0.028872927650809288 - val_accuracy : 96.328125
+Model saved to ../masif_features/GCN_graph_only.pth
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : 0.00035020021496757944 - train_accuracy : 98.03033570555675
+Epoch [5/50] [==============================] - val_loss : 0.028644442558288574 - val_accuracy : 96.40625
+Model saved to ../masif_features/GCN_graph_only.pth
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : 0.00030521652121488253 - train_accuracy : 98.33225504996047
+Epoch [6/50] [==============================] - val_loss : 0.02785453014075756 - val_accuracy : 96.65364583333333
+Model saved to ../masif_features/GCN_graph_only.pth
+Training on 13911 samples.....
+Epoch [7/50] [==============================] - train_loss : 0.0002798145794812148 - train_accuracy : 98.56228883617281
+Epoch [7/50] [==============================] - val_loss : 0.02891632728278637 - val_accuracy : 96.6015625
+Training on 13911 samples.....
+Epoch [8/50] [==============================] - train_loss : 0.0002662160900787698 - train_accuracy : 98.62698583854504
+Epoch [8/50] [==============================] - val_loss : 0.028474994003772736 - val_accuracy : 96.57552083333333
+Training on 13911 samples.....
+Epoch [9/50] [==============================] - train_loss : 0.0002616279609470113 - train_accuracy : 98.64855150600245
+Epoch [9/50] [==============================] - val_loss : 0.028250861912965775 - val_accuracy : 96.66666666666667
+Model saved to ../masif_features/GCN_graph_only.pth
+Early stopping!
+min_val_loss : 0.02785453014075756 for epoch 5 ............... best_val_accuracy : 96.66666666666667 for epoch 8
+Model saved to ../masif_features/GCN_graph_only.pth

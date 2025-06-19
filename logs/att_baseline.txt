@@ -1,0 +1,30 @@
+Datalength
+13911
+7680
+AttGNN_baseline Loaded
+Running configuration: att_baseline
+Model: AttGNN_baseline
+Save path: ../masif_features/AttGNN_baseline_l1.pth
+Training on 13911 samples.....
+Epoch [1/50] [==============================] - train_loss : 0.0021572496063580813 - train_accuracy : 83.91920063259292
+Epoch [1/50] [==============================] - val_loss : 0.09027861058712006 - val_accuracy : 88.17708333333333
+Model saved to ../masif_features/AttGNN_baseline_l1.pth
+Training on 13911 samples.....
+Epoch [2/50] [==============================] - train_loss : 0.0016918712362382043 - train_accuracy : 87.6572496585436
+Epoch [2/50] [==============================] - val_loss : 0.09781525284051895 - val_accuracy : 86.49739583333333
+Training on 13911 samples.....
+Epoch [3/50] [==============================] - train_loss : 0.0015270670137363417 - train_accuracy : 89.12371504564733
+Epoch [3/50] [==============================] - val_loss : 0.08633875846862793 - val_accuracy : 88.30729166666667
+Model saved to ../masif_features/AttGNN_baseline_l1.pth
+Training on 13911 samples.....
+Epoch [4/50] [==============================] - train_loss : 0.0014404627884651133 - train_accuracy : 89.73474229027389
+Epoch [4/50] [==============================] - val_loss : 0.09262562543153763 - val_accuracy : 86.94010416666667
+Training on 13911 samples.....
+Epoch [5/50] [==============================] - train_loss : 0.00139014283767438 - train_accuracy : 90.21637553015599
+Epoch [5/50] [==============================] - val_loss : 0.09331786632537842 - val_accuracy : 86.9140625
+Training on 13911 samples.....
+Epoch [6/50] [==============================] - train_loss : 0.0013643602465200173 - train_accuracy : 90.30263819998562
+Epoch [6/50] [==============================] - val_loss : 0.09213466942310333 - val_accuracy : 87.109375
+Early stopping!
+min_val_loss : 0.08633875846862793 for epoch 2 ............... best_val_accuracy : 88.30729166666667 for epoch 2
+Model saved to ../masif_features/AttGNN_baseline_l1.pth
